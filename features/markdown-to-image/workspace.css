@@ -214,7 +214,7 @@
 }
 .settings-fields {
     display: grid;
-    grid-template-columns: repeat(4, minmax(90px, 1fr)) minmax(200px, 1.5fr) auto;
+    grid-template-columns: repeat(4, minmax(90px, 1fr)) minmax(200px, 1.5fr);
     align-items: start;
     gap: 20px;
     padding: 12px 0 22px;
@@ -382,7 +382,7 @@
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
     .line-break-setting {
-        grid-column: span 3;
+        grid-column: span 4;
     }
     .intro-note {
         display: none;
@@ -440,13 +440,26 @@
         gap: 4px;
     }
     .settings-summary {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        justify-items: start;
         gap: 8px;
+        padding-block: 10px;
     }
     .settings-summary > span {
         display: none;
     }
     .export-scale {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        justify-content: space-between;
         gap: 8px;
+        width: 100%;
+        margin-left: 0;
+    }
+    .settings-reset {
+        grid-column: 2;
+        grid-row: 1;
     }
     .settings-fields {
         grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -70,7 +70,7 @@ describe("Markdown workspace interactions", () => {
         await waitFor(() => expect(exportMock).toHaveBeenCalledWith(expect.objectContaining({ pixelRatio: 4 })))
 
         await user.click(screen.getByRole("button", { name: "排版设置" }))
-        await user.click(screen.getByRole("button", { name: "重置排版" }))
+        await user.click(screen.getByRole("button", { name: "重置" }))
         expect(screen.getByRole("button", { name: "2×" })).toHaveAttribute("aria-pressed", "true")
         await waitFor(() => expect(loadDraft().draft?.settings.pixelRatio).toBe(2))
     })

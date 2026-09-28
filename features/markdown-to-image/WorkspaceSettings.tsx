@@ -1,6 +1,6 @@
 import { useState } from "react"
 
-import { ChevronDownIcon, RotateCcwIcon, SlidersHorizontalIcon } from "lucide-react"
+import { ChevronDownIcon, SlidersHorizontalIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -155,6 +155,9 @@ export function WorkspaceSettings({ data, disabled, onChange }: WorkspaceSetting
                         ))}
                     </ToggleGroup>
                 </div>
+                <Button className="settings-reset" variant="secondary" disabled={disabled} onClick={() => onChange({ ...defaultSettings, theme: data.theme })}>
+                    重置
+                </Button>
             </div>
             <CollapsibleContent>
                 <FieldGroup className="settings-fields">
@@ -180,10 +183,6 @@ export function WorkspaceSettings({ data, disabled, onChange }: WorkspaceSetting
                             <FieldDescription id="preserve-line-breaks-description">关闭后按标准 Markdown 分段</FieldDescription>
                         </div>
                     </Field>
-                    <Button className="self-end" variant="ghost" disabled={disabled} onClick={() => onChange({ ...defaultSettings, theme: data.theme })}>
-                        <RotateCcwIcon data-icon="inline-start" />
-                        重置排版
-                    </Button>
                 </FieldGroup>
             </CollapsibleContent>
         </Collapsible>
