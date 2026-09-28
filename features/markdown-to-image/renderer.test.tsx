@@ -113,6 +113,59 @@ describe("中文 Markdown 语法", () => {
     })
 })
 
+describe("ChatGPT 引用标记", () => {
+    it.each([true, false])("在正文、标题、列表和表格中忽略完整标记（保留换行：%s）", preserveLineBreaks => {
+        const { container } = renderMarkdown(
+            [
+                '# 标题:chatgpt-content-reference{index="0"}',
+                "",
+                '前文:chatgpt-content-reference{index="12"}:chatgpt-content-reference{index="3"}，后文。',
+                "",
+                '> **重点:chatgpt-content-reference{index="4"}**',
+                "",
+                '- 列表:chatgpt-content-reference{index="5"}',
+                "",
+                "| 内容 |",
+                "| --- |",
+                '| 表格:chatgpt-content-reference{index="6"} |',
+            ].join("\n"),
+            preserveLineBreaks,
+        )
+        expect(container.textContent).not.toContain(":chatgpt-content-reference")
+        expect(container.querySelector("h1")?.textContent).toBe("标题")
+        expect(container.querySelector("p")?.textContent).toBe("前文，后文。")
+        expect(container.querySelector("blockquote strong")?.textContent).toBe("重点")
+        expect(container.querySelector("li")?.textContent).toBe("列表")
+        expect(container.querySelector("td")?.textContent).toBe("表格")
+    })
+
+    it("忽略仅包含引用标记的段落", () => {
+        const { container } = renderMarkdown('前段。\n\n:chatgpt-content-reference{index="0"}\n\n后段。')
+        expect([...container.querySelectorAll("p")].map(node => node.textContent)).toEqual(["前段。", "后段。"])
+    })
+
+    it("兼容索引的引号和属性空格，保留链接地址与标题", () => {
+        const { container } = renderMarkdown(
+            `[链接:chatgpt-content-reference{ index = '12' }](https://example.com/ ":chatgpt-content-reference{index='1'}")后文:chatgpt-content-reference{index=2}。`,
+        )
+        expect(container.querySelector("p")?.textContent).toBe("链接后文。")
+        expect(container.querySelector("a")).toHaveAttribute("href", "https://example.com/")
+        expect(container.querySelector("a")).toHaveAttribute("title", ":chatgpt-content-reference{index='1'}")
+    })
+
+    it("保留行内代码、围栏代码和缩进代码中的标记", () => {
+        const marker = ':chatgpt-content-reference{index="0"}'
+        const { container } = renderMarkdown(`\`${marker}\`\n\n\`\`\`text\n${marker}\n\`\`\`\n\n    ${marker}`)
+        expect([...container.querySelectorAll("code")].map(node => node.textContent)).toEqual([marker, `${marker}\n`, `${marker}\n`])
+    })
+
+    it("保留不完整标记和其他相似文本", () => {
+        const source = ':chatgpt-content-reference{index="0" :chatgpt-content-reference{index="abc"} :other-reference{index="0"}'
+        const { container } = renderMarkdown(source)
+        expect(container.querySelector("p")?.textContent).toBe(source)
+    })
+})
+
 describe("安全内容与图片", () => {
     it("保留安全 HTML，过滤执行内容、事件、样式和危险协议", () => {
         const { container } = renderMarkdown(

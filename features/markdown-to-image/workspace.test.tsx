@@ -45,6 +45,23 @@ afterEach(() => {
 })
 
 describe("Markdown workspace interactions", () => {
+    it("keeps ChatGPT references in the source while omitting them from the preview and export target", async () => {
+        const user = userEvent.setup()
+        const source = '正文:chatgpt-content-reference{index="0"}。'
+        const { container } = render(<MarkdownWorkspace />)
+        const editor = screen.getByRole("textbox", { name: "Markdown 正文" })
+
+        fireEvent.change(editor, { target: { value: source } })
+        expect(editor).toHaveValue(source)
+        expect(container.querySelector(".markdown-document")?.textContent).toBe("正文。")
+
+        await user.click(screen.getByRole("button", { name: "导出 PNG" }))
+
+        await waitFor(() => expect(exportMock).toHaveBeenCalledTimes(1))
+        expect(exportMock.mock.calls[0][0].element.textContent).toBe("正文。")
+        expect(editor).toHaveValue(source)
+    })
+
     it("does not export during Chinese composition and exports the committed text afterwards", async () => {
         const user = userEvent.setup()
         render(<MarkdownWorkspace />)

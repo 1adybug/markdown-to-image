@@ -7,7 +7,36 @@ import remarkCjkFriendlyStrikethrough from "remark-cjk-friendly-gfm-strikethroug
 import remarkCjkFriendly from "remark-cjk-friendly/parseOnly"
 import remarkGfm from "remark-gfm"
 
-const commonRemarkPlugins: NonNullable<Options["remarkPlugins"]> = [remarkGfm, remarkCjkFriendly, remarkCjkFriendlyStrikethrough]
+type MarkdownRoot = Parameters<ReturnType<typeof remarkBreaks>>[0]
+
+const chatgptContentReferencePattern = /:chatgpt-content-reference\{[ \t]*index[ \t]*=[ \t]*(?:"\d+"|'\d+'|\d+)[ \t]*\}/g
+
+function remarkChatgptContentReferences() {
+    return (tree: MarkdownRoot) => {
+        function visit(node: MarkdownRoot | MarkdownRoot["children"][number]) {
+            // Only prose nodes contain references; code and source attributes remain literal.
+            if (node.type === "text") node.value = node.value.replace(chatgptContentReferencePattern, "")
+
+            if (!("children" in node)) return
+
+            for (let index = node.children.length - 1; index >= 0; index--) {
+                const child = node.children[index]
+                visit(child)
+                if (child.type === "paragraph" && child.children.every(content => content.type === "text" && !content.value.trim()))
+                    node.children.splice(index, 1)
+            }
+        }
+
+        visit(tree)
+    }
+}
+
+const commonRemarkPlugins: NonNullable<Options["remarkPlugins"]> = [
+    remarkGfm,
+    remarkCjkFriendly,
+    remarkCjkFriendlyStrikethrough,
+    remarkChatgptContentReferences,
+]
 
 const lineBreakRemarkPlugins: NonNullable<Options["remarkPlugins"]> = [...commonRemarkPlugins, remarkBreaks]
 
