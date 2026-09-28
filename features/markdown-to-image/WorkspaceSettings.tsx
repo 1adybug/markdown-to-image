@@ -4,7 +4,7 @@ import { ChevronDownIcon, RotateCcwIcon, SlidersHorizontalIcon } from "lucide-re
 
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Switch } from "@/components/ui/switch"
@@ -167,19 +167,20 @@ export function WorkspaceSettings({ data, disabled, onChange }: WorkspaceSetting
                             onChange={value => onChange({ ...data, [field.key]: value })}
                         />
                     ))}
-                    <Field orientation="horizontal" className="line-break-setting" data-disabled={disabled}>
-                        <FieldContent>
-                            <FieldLabel htmlFor="preserve-line-breaks">保留单次换行</FieldLabel>
-                            <FieldDescription>关闭后按标准 Markdown 分段</FieldDescription>
-                        </FieldContent>
-                        <Switch
-                            id="preserve-line-breaks"
-                            checked={data.preserveLineBreaks}
-                            disabled={disabled}
-                            onCheckedChange={preserveLineBreaks => onChange({ ...data, preserveLineBreaks })}
-                        />
+                    <Field className="line-break-setting" data-disabled={disabled}>
+                        <FieldLabel htmlFor="preserve-line-breaks">保留单次换行</FieldLabel>
+                        <div className="flex min-h-8 items-center gap-3">
+                            <Switch
+                                id="preserve-line-breaks"
+                                checked={data.preserveLineBreaks}
+                                disabled={disabled}
+                                aria-describedby="preserve-line-breaks-description"
+                                onCheckedChange={preserveLineBreaks => onChange({ ...data, preserveLineBreaks })}
+                            />
+                            <FieldDescription id="preserve-line-breaks-description">关闭后按标准 Markdown 分段</FieldDescription>
+                        </div>
                     </Field>
-                    <Button variant="ghost" disabled={disabled} onClick={() => onChange({ ...defaultSettings, theme: data.theme })}>
+                    <Button className="self-end" variant="ghost" disabled={disabled} onClick={() => onChange({ ...defaultSettings, theme: data.theme })}>
                         <RotateCcwIcon data-icon="inline-start" />
                         重置排版
                     </Button>

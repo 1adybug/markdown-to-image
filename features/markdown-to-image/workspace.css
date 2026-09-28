@@ -215,15 +215,12 @@
 .settings-fields {
     display: grid;
     grid-template-columns: repeat(4, minmax(90px, 1fr)) minmax(200px, 1.5fr) auto;
-    align-items: end;
+    align-items: start;
     gap: 20px;
     padding: 12px 0 22px;
 }
 .settings-fields [data-slot="field-label"] {
     justify-content: space-between;
-}
-.line-break-setting {
-    align-self: center;
 }
 .mobile-view-switch {
     display: none;
