@@ -4,10 +4,8 @@ import { cn } from "cn"
 import {
     ArrowDownToLineIcon,
     CheckIcon,
-    ChevronDownIcon,
     FileTextIcon,
     FolderOpenIcon,
-    HelpCircleIcon,
     LoaderCircleIcon,
     MoonIcon,
     RotateCcwIcon,
@@ -23,7 +21,6 @@ import logo from "@/assets/logo.svg?url"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
@@ -193,13 +190,6 @@ export function MarkdownWorkspace() {
                 </div>
             </header>
             <div className="workspace-body">
-                <div className="workspace-intro">
-                    <div>
-                        <h2>好文字，值得好好呈现。</h2>
-                        <p>写下想法，调好排版，带走一张清晰的图片。</p>
-                    </div>
-                    <span className="intro-note">为中文阅读，多想一点。</span>
-                </div>
                 {saveError && (
                     <Alert variant="destructive">
                         <AlertTitle>本地草稿未保存</AlertTitle>
@@ -369,23 +359,6 @@ export function MarkdownWorkspace() {
                     </span>
                     <span>PNG · 无水印 · Ctrl / ⌘ + Enter 导出</span>
                 </footer>
-                <Collapsible className="writing-help">
-                    <CollapsibleTrigger render={<Button variant="ghost" size="sm" />}>
-                        <HelpCircleIcon data-icon="inline-start" />
-                        中文 Markdown 小贴士
-                        <ChevronDownIcon data-icon="inline-end" />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                        <div className="writing-help-content">
-                            <p>支持中文标点旁的粗体、斜体和删除线。空行表示新段落；“保留单次换行”可控制普通回车的显示。</p>
-                            <p>Markdown 使用半角标记，例如 # 和 *；全角 ＃、＊ 会保留为正文。URL 紧贴中文标点时，建议使用 [链接文字](网址)。</p>
-                            <p>
-                                图片需使用可访问且允许跨域的地址；本地 Markdown
-                                中的相对图片路径不会自动上传。正文只保存在此浏览器，图片地址仍会由浏览器访问。导入支持 .md、.markdown、.txt，最大 2 MB。
-                            </p>
-                        </div>
-                    </CollapsibleContent>
-                </Collapsible>
             </div>
         </main>
     )

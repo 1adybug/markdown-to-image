@@ -2,7 +2,6 @@ import { type Ref, useEffect, useRef, useState } from "react"
 
 import { ImageIcon, ScanIcon } from "lucide-react"
 
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 import { MarkdownDocument } from "./MarkdownDocument"
@@ -69,17 +68,6 @@ export function DocumentPreview({ data, documentRef, disabled }: DocumentPreview
                 </ToggleGroup>
             </header>
             <div className="preview-viewport" ref={viewportRef}>
-                {isEmpty && (
-                    <Empty>
-                        <EmptyHeader>
-                            <EmptyMedia variant="icon">
-                                <ImageIcon />
-                            </EmptyMedia>
-                            <EmptyTitle>从一句话开始</EmptyTitle>
-                            <EmptyDescription>在编辑区写下内容，图片会在这里呈现。</EmptyDescription>
-                        </EmptyHeader>
-                    </Empty>
-                )}
                 <div className="preview-paper-frame" hidden={isEmpty} style={{ width: data.settings.width * scale, height: height * scale }}>
                     <div className="preview-paper-scale" ref={contentRef} style={{ width: data.settings.width, transform: `scale(${scale})` }}>
                         <MarkdownDocument data={data} ref={documentRef} />

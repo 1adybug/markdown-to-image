@@ -69,27 +69,6 @@
     padding: 24px 36px 20px;
     margin-inline: auto;
 }
-.workspace-intro {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 24px;
-}
-.workspace-intro h2 {
-    font-size: 23px;
-    font-weight: 600;
-    letter-spacing: -0.035em;
-}
-.workspace-intro p {
-    margin-top: 6px;
-    font-size: 13px;
-    color: var(--muted-foreground);
-}
-.intro-note {
-    color: var(--muted-foreground);
-    font-size: 12px;
-}
 .workspace-body > [role="alert"] {
     margin-bottom: 16px;
 }
@@ -318,19 +297,6 @@
 .save-status {
     gap: 6px;
 }
-.writing-help {
-    margin-top: 8px;
-}
-.writing-help-content {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    max-width: 850px;
-    padding: 8px 12px 14px;
-    color: var(--muted-foreground);
-    font-size: 12px;
-    line-height: 1.8;
-}
 .import-feedback {
     flex: none;
     border-radius: 0;
@@ -367,9 +333,6 @@
     .line-break-setting {
         grid-column: span 4;
     }
-    .intro-note {
-        display: none;
-    }
 }
 
 @media (max-width: 767px) {
@@ -399,15 +362,6 @@
     }
     .workspace-body {
         padding: 22px 16px 20px;
-    }
-    .workspace-intro {
-        margin-bottom: 22px;
-    }
-    .workspace-intro h2 {
-        font-size: 21px;
-    }
-    .workspace-intro p {
-        font-size: 12px;
     }
     .theme-options {
         grid-template-columns: repeat(5, minmax(0, 1fr));
