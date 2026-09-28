@@ -1,19 +1,15 @@
-import type { FC, ReactNode } from "react"
+import type { FC } from "react"
 
-import { Navigate } from "react-router"
+import { Navigate, Outlet } from "react-router"
 
 import { Role } from "@/apis/login"
 
 import { useGetAccount } from "@/hooks/useGetAccount"
 
-export interface LayoutProps {
-    children?: ReactNode
-}
-
-const Layout: FC<LayoutProps> = ({ children }) => {
+const Layout: FC = () => {
     const { data } = useGetAccount()
     if (data?.role !== Role.管理员) return <Navigate to="/" />
-    return children
+    return <Outlet />
 }
 
 export default Layout

@@ -9,6 +9,7 @@ dist/
 
 # Profile
 .rspack-profile-*/
+.vitest/
 
 # IDE
 .vscode/*

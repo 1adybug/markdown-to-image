@@ -1,0 +1,523 @@
+.markdown-document,
+.theme-swatch {
+    --doc-background: #ffffff;
+    --doc-text: #343936;
+    --doc-heading: #202723;
+    --doc-muted: #64716a;
+    --doc-accent: #287556;
+    --doc-border: #dde5df;
+    --doc-soft: #f2f6f3;
+    --doc-code: #f5f7f5;
+    --doc-code-text: #33463a;
+    --doc-code-keyword: #7959a5;
+    --doc-code-string: #337951;
+    --doc-code-number: #ac663a;
+    --doc-code-title: #2f7092;
+}
+
+.markdown-document {
+    position: relative;
+    flex: none;
+    min-height: 160px;
+    color: var(--doc-text);
+    background: var(--doc-background);
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-synthesis-weight: none;
+    text-align: left;
+    letter-spacing: normal;
+    line-break: strict;
+    word-break: normal;
+    overflow-wrap: break-word;
+    text-autospace: normal;
+    -webkit-font-smoothing: antialiased;
+}
+
+.markdown-document *,
+.markdown-document *::before,
+.markdown-document *::after {
+    box-sizing: border-box;
+}
+
+.markdown-document [id] {
+    scroll-margin-block: 24px;
+}
+
+.markdown-document :is(h1, h2, h3, h4, h5, h6) {
+    color: var(--doc-heading);
+    font-weight: 700;
+    line-height: 1.5;
+    margin-block: 1.5em 0.65em;
+    overflow-wrap: anywhere;
+}
+
+.markdown-document h1 {
+    font-size: 1.8em;
+    padding-bottom: 0.55em;
+    margin-bottom: 0.9em;
+    border-bottom: 2px solid var(--doc-border);
+}
+
+.markdown-document h2 {
+    font-size: 1.35em;
+}
+
+.markdown-document h3 {
+    font-size: 1.15em;
+}
+
+.markdown-document :is(h4, h5, h6) {
+    font-size: 1em;
+}
+
+.markdown-document :is(p, ul, ol, blockquote, pre, table, dl) {
+    margin-block: 0 1.15em;
+}
+
+.markdown-document > :first-child {
+    margin-top: 0;
+}
+
+.markdown-document > :last-child {
+    margin-bottom: 0;
+}
+
+.markdown-document strong {
+    color: var(--doc-heading);
+    font-weight: 700;
+}
+
+.markdown-document em {
+    font-style: italic;
+}
+
+.markdown-document del {
+    color: var(--doc-muted);
+    text-decoration: line-through;
+}
+
+.markdown-document a {
+    color: var(--doc-accent);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    overflow-wrap: anywhere;
+}
+
+.markdown-document a:focus-visible {
+    outline: 2px solid var(--doc-accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+}
+
+.markdown-document :is(ul, ol) {
+    padding-inline-start: 1.7em;
+    list-style-position: outside;
+}
+
+.markdown-document ul {
+    list-style-type: disc;
+}
+
+.markdown-document ol {
+    list-style-type: decimal;
+}
+
+.markdown-document ul ul {
+    list-style-type: circle;
+}
+
+.markdown-document li {
+    padding-inline-start: 0.2em;
+    margin-block: 0.3em;
+}
+
+.markdown-document li::marker {
+    color: var(--doc-accent);
+    font-weight: 600;
+}
+
+.markdown-document li :is(p, ul, ol) {
+    margin-block: 0.35em;
+}
+
+.markdown-document .task-list-item {
+    list-style: none;
+}
+
+.markdown-task-checkbox {
+    display: inline-flex;
+    width: 1.1em;
+    height: 1.1em;
+    margin-inline: -1.45em 0.35em;
+    color: var(--doc-accent);
+    vertical-align: -0.14em;
+}
+
+.markdown-task-checkbox svg {
+    width: 100%;
+    height: 100%;
+}
+
+.markdown-document blockquote {
+    padding: 0.85em 1.15em;
+    color: var(--doc-muted);
+    background: var(--doc-soft);
+    border-inline-start: 3px solid var(--doc-accent);
+    border-radius: 0 6px 6px 0;
+}
+
+.markdown-document blockquote > :last-child {
+    margin-bottom: 0;
+}
+
+.markdown-document :is(code, pre, kbd, samp) {
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", var(--font-sans), monospace;
+    font-variant-ligatures: none;
+    text-autospace: no-autospace;
+}
+
+.markdown-document :not(pre) > code,
+.markdown-document kbd {
+    color: var(--doc-code-text);
+    background: var(--doc-code);
+    border: 1px solid var(--doc-border);
+    border-radius: 4px;
+    padding: 0.05em 0.28em;
+    font-size: 0.87em;
+    overflow-wrap: anywhere;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+}
+
+.markdown-document pre {
+    color: var(--doc-code-text);
+    background: var(--doc-code);
+    border: 1px solid var(--doc-border);
+    border-radius: 8px;
+    padding: 1em 1.1em;
+    font-size: 0.82em;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    tab-size: 4;
+}
+
+.markdown-document pre code {
+    color: inherit;
+    font-size: inherit;
+    white-space: inherit;
+}
+
+.markdown-document table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 0.9em;
+    line-height: 1.65;
+}
+
+.markdown-document :is(th, td) {
+    border: 1px solid var(--doc-border);
+    padding: 0.65em 0.8em;
+    text-align: left;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+
+.markdown-document th {
+    color: var(--doc-heading);
+    background: var(--doc-soft);
+    font-weight: 600;
+}
+
+.markdown-document tr:nth-child(even) td {
+    background: var(--doc-soft);
+}
+
+.markdown-document :is(th, td)[align="center"] {
+    text-align: center;
+}
+
+.markdown-document :is(th, td)[align="right"] {
+    text-align: right;
+}
+
+.markdown-document hr {
+    height: 0;
+    border: 0;
+    border-top: 1px solid var(--doc-border);
+    margin-block: 1.8em;
+}
+
+.markdown-document img {
+    display: inline-block;
+    max-width: 100%;
+    height: auto;
+    vertical-align: middle;
+    border-radius: 5px;
+}
+
+.markdown-document img[hidden] {
+    display: none;
+}
+
+.markdown-document .markdown-image-error {
+    display: block;
+    padding: 1em;
+    border: 1px dashed var(--doc-accent);
+    border-radius: 5px;
+    color: var(--doc-muted);
+    background: var(--doc-soft);
+    font-size: 0.85em;
+}
+
+.markdown-document .markdown-image-retry {
+    display: block;
+    margin-top: 0.6em;
+    padding: 0.3em 0.7em;
+    border: 1px solid var(--doc-accent);
+    border-radius: 4px;
+    color: var(--doc-accent);
+    background: var(--doc-background);
+    font: inherit;
+    cursor: pointer;
+}
+
+.markdown-document .markdown-image-retry:disabled {
+    cursor: wait;
+    opacity: 0.6;
+}
+
+.markdown-document .markdown-image-retry:focus-visible {
+    outline: 2px solid var(--doc-accent);
+    outline-offset: 3px;
+}
+
+.markdown-document .footnotes {
+    color: var(--doc-muted);
+    border-top: 1px solid var(--doc-border);
+    margin-top: 2em;
+    padding-top: 0.8em;
+    font-size: 0.8em;
+}
+
+.markdown-document .footnotes h2 {
+    font-size: 1em;
+    margin-block: 0 0.6em;
+}
+
+.markdown-document .footnotes :is(ol, p) {
+    margin-bottom: 0;
+}
+
+.markdown-document :is(sub, sup) {
+    font-size: 0.75em;
+    line-height: 0;
+}
+
+.markdown-document :is(.hljs-comment, .hljs-quote) {
+    color: var(--doc-muted);
+    font-style: italic;
+}
+
+.markdown-document :is(.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-type, .hljs-meta) {
+    color: var(--doc-code-keyword);
+}
+
+.markdown-document :is(.hljs-string, .hljs-regexp, .hljs-addition, .hljs-attribute, .hljs-template-tag) {
+    color: var(--doc-code-string);
+}
+
+.markdown-document :is(.hljs-number, .hljs-symbol, .hljs-bullet, .hljs-deletion) {
+    color: var(--doc-code-number);
+}
+
+.markdown-document :is(.hljs-title, .hljs-built_in, .hljs-name, .hljs-selector-id, .hljs-selector-class, .hljs-attr) {
+    color: var(--doc-code-title);
+}
+
+.markdown-document .hljs-emphasis {
+    font-style: italic;
+}
+
+.markdown-document .hljs-strong {
+    font-weight: 700;
+}
+
+[data-document-theme="ai"] {
+    --doc-background: #fcfbff;
+    --doc-text: #454057;
+    --doc-heading: #362754;
+    --doc-muted: #777083;
+    --doc-accent: #7558ad;
+    --doc-border: #e5dcf1;
+    --doc-soft: #f1ecf8;
+    --doc-code: #f4f0fa;
+    --doc-code-text: #493a5d;
+    --doc-code-keyword: #8150aa;
+    --doc-code-string: #367d71;
+    --doc-code-number: #ac6046;
+    --doc-code-title: #436b9f;
+}
+
+.markdown-document[data-document-theme="ai"] h2 {
+    border-inline-start: 3px solid var(--doc-accent);
+    padding-inline-start: 0.55em;
+}
+
+[data-document-theme="dark"] {
+    --doc-background: #202327;
+    --doc-text: #d6dcdf;
+    --doc-heading: #f2f5f6;
+    --doc-muted: #a0aeb5;
+    --doc-accent: #95cbbf;
+    --doc-border: #414a50;
+    --doc-soft: #2b3136;
+    --doc-code: #191d21;
+    --doc-code-text: #d5dfe6;
+    --doc-code-keyword: #c6a7df;
+    --doc-code-string: #a4c997;
+    --doc-code-number: #e5b282;
+    --doc-code-title: #8ebcdd;
+    color-scheme: dark;
+}
+
+[data-document-theme="paper"] {
+    --doc-background: #f8f3e8;
+    --doc-text: #514735;
+    --doc-heading: #3e3222;
+    --doc-muted: #80715c;
+    --doc-accent: #9b603b;
+    --doc-border: #ddd1ba;
+    --doc-soft: #f0e8d8;
+    --doc-code: #eee5d4;
+    --doc-code-text: #56452e;
+    --doc-code-keyword: #855679;
+    --doc-code-string: #517642;
+    --doc-code-number: #a16231;
+    --doc-code-title: #3f6a82;
+}
+
+.markdown-document[data-document-theme="paper"] h1 {
+    border-bottom-style: double;
+    border-bottom-width: 3px;
+}
+
+[data-document-theme="minimal"] {
+    --doc-background: #ffffff;
+    --doc-text: #353535;
+    --doc-heading: #141414;
+    --doc-muted: #737373;
+    --doc-accent: #444444;
+    --doc-border: #e7e7e7;
+    --doc-soft: #fafafa;
+    --doc-code: #f6f6f6;
+    --doc-code-text: #353535;
+    --doc-code-keyword: #5e4c6c;
+    --doc-code-string: #4a6752;
+    --doc-code-number: #866245;
+    --doc-code-title: #4a626e;
+}
+
+.markdown-document[data-document-theme="minimal"] h1 {
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
+.markdown-document[data-document-theme="minimal"] blockquote {
+    background: none;
+    border-radius: 0;
+}
+
+[data-document-theme="tech"] {
+    --doc-background: #101e32;
+    --doc-text: #c6d8ec;
+    --doc-heading: #e5f2ff;
+    --doc-muted: #9aafc7;
+    --doc-accent: #76c5fa;
+    --doc-border: #2b4765;
+    --doc-soft: #172a43;
+    --doc-code: #0c1728;
+    --doc-code-text: #d1e2f5;
+    --doc-code-keyword: #b9a4f4;
+    --doc-code-string: #93d5be;
+    --doc-code-number: #e6bb8a;
+    --doc-code-title: #7fcdf4;
+    background-image: linear-gradient(140deg, #101e32, #172b46);
+    color-scheme: dark;
+}
+
+.markdown-document[data-document-theme="tech"] h2 {
+    color: var(--doc-accent);
+}
+
+[data-document-theme="notion"] {
+    --doc-background: #ffffff;
+    --doc-text: #37352f;
+    --doc-heading: #37352f;
+    --doc-muted: #787774;
+    --doc-accent: #a34a38;
+    --doc-border: #e9e9e7;
+    --doc-soft: #f7f7f5;
+    --doc-code: #f1f1ef;
+    --doc-code-text: #ab4e45;
+    --doc-code-keyword: #96618f;
+    --doc-code-string: #53875d;
+    --doc-code-number: #b27649;
+    --doc-code-title: #477797;
+}
+
+.markdown-document[data-document-theme="notion"] h1 {
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
+.markdown-document[data-document-theme="notion"] blockquote {
+    border-color: var(--doc-heading);
+    background: none;
+    border-radius: 0;
+    color: var(--doc-text);
+}
+
+[data-document-theme="sunset"] {
+    --doc-background: #fff1e8;
+    --doc-text: #664947;
+    --doc-heading: #783c46;
+    --doc-muted: #8b6964;
+    --doc-accent: #ac535f;
+    --doc-border: #e9c6c2;
+    --doc-soft: #fff5ec;
+    --doc-code: #fff7ef;
+    --doc-code-text: #6a4149;
+    --doc-code-keyword: #9a4e87;
+    --doc-code-string: #4d7755;
+    --doc-code-number: #a76539;
+    --doc-code-title: #6a609b;
+    background-image: linear-gradient(155deg, #fff1dc 0%, #fce5e4 55%, #efdef1 100%);
+}
+
+[data-document-theme="terminal"] {
+    --doc-background: #141d19;
+    --doc-text: #b7d7be;
+    --doc-heading: #dcf4df;
+    --doc-muted: #86ac90;
+    --doc-accent: #a0d99f;
+    --doc-border: #365641;
+    --doc-soft: #1b2b21;
+    --doc-code: #0f1813;
+    --doc-code-text: #b7d7be;
+    --doc-code-keyword: #d8c397;
+    --doc-code-string: #a0d99f;
+    --doc-code-number: #dba78b;
+    --doc-code-title: #8dc7bf;
+    color-scheme: dark;
+}
+
+.markdown-document[data-document-theme="terminal"] :is(h1, h2) {
+    border-bottom: 1px dashed var(--doc-border);
+    padding-bottom: 0.45em;
+}
+
+.markdown-document[data-document-theme="terminal"] :is(pre, blockquote) {
+    border-radius: 0;
+}

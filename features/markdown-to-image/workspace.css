@@ -1,0 +1,498 @@
+.markdown-workspace {
+    min-height: 100%;
+    background: var(--background);
+    color: var(--foreground);
+}
+
+.workspace-header {
+    display: flex;
+    min-height: 76px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 16px 36px;
+    border-bottom: 1px solid var(--border);
+}
+
+.workspace-brand,
+.header-actions,
+.panel-heading,
+.panel-heading > div,
+.editor-actions,
+.editor-footer-actions,
+.workspace-status,
+.save-status,
+.privacy-note,
+.settings-summary,
+.export-scale {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-mark {
+    position: relative;
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border: 1px solid var(--primary);
+    border-radius: 12px 12px 3px 12px;
+    color: var(--primary);
+    font-size: 25px;
+    font-weight: 600;
+}
+
+.brand-mark > span {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    right: -3px;
+    bottom: -3px;
+    border: 2px solid var(--background);
+    border-radius: 50%;
+    background: var(--primary);
+}
+
+.workspace-brand h1 {
+    font-size: 18px;
+    font-weight: 650;
+    letter-spacing: 0.06em;
+}
+.workspace-brand p {
+    color: var(--muted-foreground);
+    font-size: 11px;
+    margin-top: 2px;
+}
+.header-actions {
+    gap: 16px;
+}
+.privacy-note {
+    color: var(--muted-foreground);
+    font-size: 12px;
+    gap: 6px;
+}
+.privacy-note svg,
+.save-status svg {
+    width: 14px;
+    height: 14px;
+    flex: none;
+}
+.export-button {
+    min-width: 126px;
+}
+.workspace-body {
+    max-width: 1680px;
+    padding: 24px 36px 20px;
+    margin-inline: auto;
+}
+.workspace-intro {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.workspace-intro h2 {
+    font-size: 23px;
+    font-weight: 600;
+    letter-spacing: -0.035em;
+}
+.workspace-intro p {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--muted-foreground);
+}
+.intro-note {
+    color: var(--muted-foreground);
+    font-size: 12px;
+}
+.workspace-body > [role="alert"] {
+    margin-bottom: 16px;
+}
+.section-caption {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    margin-bottom: 12px;
+}
+.section-caption h2 {
+    font-size: 13px;
+    font-weight: 600;
+}
+.section-caption > span {
+    font-size: 11px;
+    color: var(--muted-foreground);
+}
+.theme-options {
+    display: grid;
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+    gap: 12px;
+}
+.theme-option {
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    min-width: 0;
+}
+.theme-option:has([data-disabled]) {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+.theme-swatch {
+    display: flex;
+    height: 66px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 5px;
+    padding: 10px 16px;
+    border: 1px solid var(--doc-border);
+    border-radius: 8px;
+    background-color: var(--doc-background);
+    color: var(--doc-heading);
+    transition:
+        outline-color 120ms,
+        transform 120ms;
+}
+.theme-swatch > span {
+    font-size: 18px;
+    font-weight: 650;
+    line-height: 1;
+}
+.theme-swatch > i {
+    height: 2px;
+    width: 76%;
+    opacity: 0.25;
+    background: currentColor;
+    border-radius: 1px;
+}
+.theme-swatch > i:last-child {
+    width: 46%;
+}
+.theme-option[data-selected="true"] .theme-swatch {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
+}
+.theme-option:has(:focus-visible) .theme-swatch {
+    outline: 3px solid var(--ring);
+    outline-offset: 3px;
+}
+.theme-option:not(:has([data-disabled])):hover .theme-swatch {
+    transform: translateY(-2px);
+}
+.theme-option-label {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    white-space: nowrap;
+}
+.settings-panel {
+    margin-top: 18px;
+    border-block: 1px solid var(--border);
+}
+.settings-summary {
+    min-height: 54px;
+    gap: 14px;
+}
+.settings-summary > span {
+    font-size: 11px;
+    color: var(--muted-foreground);
+}
+.summary-dot {
+    padding-inline: 9px;
+    opacity: 0.6;
+}
+.export-scale {
+    gap: 12px;
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--muted-foreground);
+}
+.settings-fields {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(90px, 1fr)) minmax(200px, 1.5fr) auto;
+    align-items: end;
+    gap: 20px;
+    padding: 12px 0 22px;
+}
+.settings-fields [data-slot="field-label"] {
+    justify-content: space-between;
+}
+.line-break-setting {
+    align-self: center;
+}
+.mobile-view-switch {
+    display: none;
+}
+.workspace-panels {
+    display: grid;
+    grid-template-columns: minmax(300px, 0.85fr) minmax(0, 1.15fr);
+    gap: 20px;
+    margin-top: 20px;
+    height: clamp(520px, calc(100dvh - 355px), 1000px);
+}
+.editor-panel,
+.preview-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--card);
+}
+.panel-heading {
+    flex: none;
+    min-height: 53px;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+}
+.panel-heading > div {
+    gap: 8px;
+}
+.panel-heading > div > svg {
+    width: 15px;
+    height: 15px;
+    color: var(--muted-foreground);
+}
+.panel-heading h2 {
+    font-size: 13px;
+    font-weight: 600;
+}
+.editor-actions {
+    gap: 2px;
+}
+.editor-field {
+    flex: 1;
+    min-height: 0;
+    gap: 0;
+}
+.markdown-editor {
+    flex: 1;
+    height: 100%;
+    min-height: 200px;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}
+.panel-footer {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 42px;
+    padding: 7px 16px;
+    border-top: 1px solid var(--border);
+    color: var(--muted-foreground);
+    font-size: 10px;
+}
+.editor-footer-actions {
+    gap: 2px;
+}
+.live-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--muted-foreground);
+    font-size: 10px;
+}
+.live-label i {
+    width: 5px;
+    height: 5px;
+    background: var(--primary);
+    border-radius: 50%;
+}
+.preview-viewport {
+    flex: 1;
+    min-height: 0;
+    padding: 24px;
+    overflow: auto;
+    scrollbar-gutter: stable;
+    background-color: var(--muted);
+    background-image: radial-gradient(color-mix(in srgb, var(--foreground) 12%, transparent) 0.75px, transparent 0.75px);
+    background-size: 12px 12px;
+}
+.preview-paper-frame {
+    position: relative;
+    margin-inline: auto;
+}
+.preview-paper-scale {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: top left;
+    box-shadow: 0 5px 25px #0000000b;
+}
+.workspace-status {
+    justify-content: space-between;
+    margin-top: 13px;
+    color: var(--muted-foreground);
+    font-size: 11px;
+}
+.save-status {
+    gap: 6px;
+}
+.writing-help {
+    margin-top: 8px;
+}
+.writing-help-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 850px;
+    padding: 8px 12px 14px;
+    color: var(--muted-foreground);
+    font-size: 12px;
+    line-height: 1.8;
+}
+.import-feedback {
+    flex: none;
+    border-radius: 0;
+    border-width: 0 0 1px;
+}
+.import-retry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+@media (min-width: 1600px) {
+    .workspace-panels {
+        grid-template-columns: minmax(360px, 0.8fr) minmax(0, 1.2fr);
+    }
+}
+@media (max-width: 1100px) {
+    .workspace-header {
+        padding-inline: 24px;
+    }
+    .workspace-body {
+        padding-inline: 24px;
+    }
+    .theme-options {
+        gap: 10px;
+    }
+    .theme-swatch {
+        padding-inline: 12px;
+    }
+    .settings-fields {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .line-break-setting {
+        grid-column: span 3;
+    }
+    .intro-note {
+        display: none;
+    }
+}
+
+@media (max-width: 767px) {
+    .workspace-header {
+        padding: 14px 16px;
+        min-height: 72px;
+        gap: 8px;
+    }
+    .workspace-brand {
+        gap: 9px;
+    }
+    .workspace-brand h1 {
+        font-size: 16px;
+    }
+    .brand-mark {
+        width: 35px;
+        height: 35px;
+        font-size: 22px;
+    }
+    .header-actions {
+        gap: 7px;
+    }
+    .privacy-note {
+        display: none;
+    }
+    .export-button {
+        min-width: 112px;
+    }
+    .workspace-body {
+        padding: 22px 16px 20px;
+    }
+    .workspace-intro {
+        margin-bottom: 22px;
+    }
+    .workspace-intro h2 {
+        font-size: 21px;
+    }
+    .workspace-intro p {
+        font-size: 12px;
+    }
+    .theme-options {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 14px 10px;
+    }
+    .theme-swatch {
+        height: 55px;
+        padding-inline: 10px;
+    }
+    .theme-option-label {
+        font-size: 10px;
+        gap: 4px;
+    }
+    .settings-summary {
+        gap: 8px;
+    }
+    .settings-summary > span {
+        display: none;
+    }
+    .export-scale {
+        gap: 8px;
+    }
+    .settings-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+    .line-break-setting {
+        grid-column: span 2;
+    }
+    .mobile-view-switch {
+        display: flex;
+        margin-top: 18px;
+        justify-content: center;
+    }
+    .workspace-panels {
+        display: flex;
+        height: max(480px, 68dvh);
+        margin-top: 14px;
+    }
+    .editor-panel,
+    .preview-panel {
+        width: 100%;
+    }
+    .workspace-panels[data-mobile-view="editor"] .preview-panel {
+        display: none;
+    }
+    .workspace-panels[data-mobile-view="preview"] .editor-panel {
+        display: none;
+    }
+    .workspace-status {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+    .panel-footer {
+        padding-inline: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .markdown-workspace *,
+    .markdown-workspace *::before,
+    .markdown-workspace *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}

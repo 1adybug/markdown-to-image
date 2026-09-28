@@ -150,16 +150,38 @@ body,
     height: 8px;
 }
 
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+:root {
+    --scrollbar-thumb: color-mix(in srgb, var(--foreground) 22%, transparent);
+    --scrollbar-hover: color-mix(in srgb, var(--foreground) 38%, transparent);
+    --scrollbar-active: color-mix(in srgb, var(--foreground) 50%, transparent);
+    --scrollbar-track: transparent;
+}
+
 ::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.25);
+    background-color: var(--scrollbar-thumb);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(0, 0, 0, 0.45);
+    background-color: var(--scrollbar-hover);
+}
+
+::-webkit-scrollbar-thumb:active {
+    background-color: var(--scrollbar-active);
+}
+
+@media (forced-colors: active) {
+    * {
+        scrollbar-color: auto;
+    }
 }
 
 ::-webkit-scrollbar-track {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--scrollbar-track);
 }
 
 button:disabled {

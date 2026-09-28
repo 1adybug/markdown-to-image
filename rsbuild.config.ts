@@ -22,9 +22,9 @@ export default defineConfig({
         },
     },
     html: {
-        title: "格数科技",
+        title: "Markdown 转图片 · 字里成图",
         meta: {
-            description: "powered by geshu",
+            description: "中文友好的 Markdown 转图片工具，实时预览、九种主题与高清 PNG 导出。内容在浏览器本地处理。",
         },
         mountId: "root",
     },
