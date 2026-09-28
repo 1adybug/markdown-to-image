@@ -19,6 +19,8 @@ import {
 import { useTheme } from "next-themes"
 import { toast } from "react-hot-toast"
 
+import logo from "@/assets/logo.svg?url"
+
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -154,9 +156,7 @@ export function MarkdownWorkspace() {
             <title>Markdown 转图片 · 字里成图</title>
             <header className="workspace-header">
                 <div className="workspace-brand">
-                    <span className="brand-mark" aria-hidden="true">
-                        文<span />
-                    </span>
+                    <img className="brand-mark" src={logo} width={42} height={42} alt="" />
                     <div>
                         <h1>字里成图</h1>
                         <p>Markdown 转图片</p>

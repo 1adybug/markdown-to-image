@@ -55,9 +55,9 @@ const Page: FC = () => {
             <div className="relative p-8">
                 <div className="flex items-center gap-2">
                     <div className="flex">
-                        <img className="h-10" src={logo} alt="logo" />
+                        <img className="size-10" src={logo} width={40} height={40} alt="" />
                     </div>
-                    <h1 className="text-2xl font-bold">格数科技</h1>
+                    <h1 className="text-2xl font-bold">字里成图</h1>
                 </div>
                 <div className="absolute top-1/2 left-1/2 w-72 -translate-x-1/2 -translate-y-1/2">
                     <form className="grid gap-4" action={loginAction}>

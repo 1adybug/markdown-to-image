@@ -3,6 +3,8 @@ import { createRoot } from "react-dom/client"
 
 import App from "./App"
 
+import { registerServiceWorker } from "./features/pwa/register"
+
 import "@fontsource-variable/inter"
 import "@fontsource-variable/noto-sans-sc/wght.css"
 
@@ -15,3 +17,5 @@ root.render(
         <App />
     </StrictMode>,
 )
+
+registerServiceWorker()

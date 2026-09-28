@@ -31,27 +31,10 @@
 }
 
 .brand-mark {
-    position: relative;
-    display: grid;
+    display: block;
     width: 42px;
     height: 42px;
-    place-items: center;
-    border: 1px solid var(--primary);
-    border-radius: 12px 12px 3px 12px;
-    color: var(--primary);
-    font-size: 25px;
-    font-weight: 600;
-}
-
-.brand-mark > span {
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    right: -3px;
-    bottom: -3px;
-    border: 2px solid var(--background);
-    border-radius: 50%;
-    background: var(--primary);
+    flex: none;
 }
 
 .workspace-brand h1 {
@@ -404,7 +387,6 @@
     .brand-mark {
         width: 35px;
         height: 35px;
-        font-size: 22px;
     }
     .header-actions {
         gap: 7px;

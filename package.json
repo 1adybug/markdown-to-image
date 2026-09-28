@@ -4,9 +4,11 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "rsbuild build",
+        "build": "pnpm icons:generate && rsbuild build",
         "dev": "rsbuild dev --open",
         "preview": "rsbuild preview",
+        "icons:generate": "node scripts/generate-icons.mjs",
+        "icons:check": "node scripts/generate-icons.mjs --check",
         "format": "prettier --write .",
         "fg": "npm run format && git add . && git commit -m \"feat: format\"",
         "prepare": "husky",
@@ -46,6 +48,7 @@
     "devDependencies": {
         "@1adybug/eslint": "^0.0.17",
         "@1adybug/prettier": "^0.0.33",
+        "@resvg/resvg-js": "^2.6.2",
         "@rsbuild/core": "^2.2.8",
         "@rsbuild/plugin-babel": "^2.1.0",
         "@rsbuild/plugin-react": "^2.0.1",
