@@ -45,6 +45,36 @@ afterEach(() => {
 })
 
 describe("Markdown workspace interactions", () => {
+    it("defaults to 2x when there is no saved draft", async () => {
+        localStorage.clear()
+        const user = userEvent.setup()
+        render(<MarkdownWorkspace />)
+
+        expect(screen.getByRole("button", { name: "2×" })).toHaveAttribute("aria-pressed", "true")
+        await user.click(screen.getByRole("button", { name: "导出 PNG" }))
+        await waitFor(() => expect(exportMock).toHaveBeenCalledWith(expect.objectContaining({ pixelRatio: 2 })))
+    })
+
+    it("saves, restores and exports at 4x, then resets to 2x", async () => {
+        const user = userEvent.setup()
+        const { unmount } = render(<MarkdownWorkspace />)
+
+        await user.click(screen.getByRole("button", { name: "4×" }))
+        expect(screen.getByRole("button", { name: "4×" })).toHaveAttribute("aria-pressed", "true")
+        await waitFor(() => expect(loadDraft().draft?.settings.pixelRatio).toBe(4))
+        unmount()
+        render(<MarkdownWorkspace />)
+
+        expect(screen.getByRole("button", { name: "4×" })).toHaveAttribute("aria-pressed", "true")
+        await user.click(screen.getByRole("button", { name: "导出 PNG" }))
+        await waitFor(() => expect(exportMock).toHaveBeenCalledWith(expect.objectContaining({ pixelRatio: 4 })))
+
+        await user.click(screen.getByRole("button", { name: "排版设置" }))
+        await user.click(screen.getByRole("button", { name: "重置排版" }))
+        expect(screen.getByRole("button", { name: "2×" })).toHaveAttribute("aria-pressed", "true")
+        await waitFor(() => expect(loadDraft().draft?.settings.pixelRatio).toBe(2))
+    })
+
     it("keeps ChatGPT references in the source while omitting them from the preview and export target", async () => {
         const user = userEvent.setup()
         const source = '正文:chatgpt-content-reference{index="0"}。'

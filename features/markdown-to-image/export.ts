@@ -1,4 +1,4 @@
-import type { DocumentSettings } from "./model"
+import { type DocumentSettings, isPixelRatio } from "./model"
 
 const resourceTimeout = 20_000
 const maximumDimension = 16_384
@@ -13,7 +13,7 @@ export interface CalculateExportSizeParams {
 export function calculateExportSize(params: CalculateExportSizeParams) {
     const { width, height, pixelRatio } = params
     if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) throw new Error("文稿尺寸为空或无效，请等待预览显示后重试。")
-    if (![1, 2, 3].includes(pixelRatio)) throw new Error("导出倍率必须是 1、2 或 3 倍。")
+    if (!isPixelRatio(pixelRatio)) throw new Error("导出倍率必须是 1、2、3 或 4 倍。")
 
     const layoutWidth = Math.ceil(width)
     const layoutHeight = Math.ceil(height)

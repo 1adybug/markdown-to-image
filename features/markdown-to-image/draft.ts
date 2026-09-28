@@ -1,4 +1,4 @@
-import { type DocumentSettings, type MarkdownDraft, MarkdownTheme, settingRanges } from "./model"
+import { type DocumentSettings, type MarkdownDraft, isPixelRatio, MarkdownTheme, settingRanges } from "./model"
 
 export const DRAFT_STORAGE_KEY = "markdown-to-image:draft"
 
@@ -40,7 +40,7 @@ function parseDraft(value: unknown): MarkdownDraft | null {
         !isSettingNumber(settings.lineHeight, settingRanges.lineHeight) ||
         !isSettingNumber(settings.padding, settingRanges.padding) ||
         typeof settings.preserveLineBreaks !== "boolean" ||
-        (settings.pixelRatio !== 1 && settings.pixelRatio !== 2 && settings.pixelRatio !== 3)
+        !isPixelRatio(settings.pixelRatio)
     )
         return null
 

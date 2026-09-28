@@ -10,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Switch } from "@/components/ui/switch"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
-import { type DocumentSettings, defaultSettings, MarkdownTheme, settingRanges } from "./model"
+import { type DocumentSettings, defaultSettings, isPixelRatio, MarkdownTheme, PixelRatio, settingRanges } from "./model"
 
 export interface WorkspaceSettingsProps {
     data: DocumentSettings
@@ -141,14 +141,14 @@ export function WorkspaceSettings({ data, disabled, onChange }: WorkspaceSetting
                         disabled={disabled}
                         onValueChange={values => {
                             const value = Number(values[0])
-                            if (value === 1 || value === 2 || value === 3) onChange({ ...data, pixelRatio: value })
+                            if (isPixelRatio(value)) onChange({ ...data, pixelRatio: value })
                         }}
                         aria-labelledby="scale-label"
                         variant="outline"
                         spacing={0}
                         size="sm"
                     >
-                        {[1, 2, 3].map(value => (
+                        {Object.values(PixelRatio).map(value => (
                             <ToggleGroupItem key={value} value={String(value)}>
                                 {value}×
                             </ToggleGroupItem>

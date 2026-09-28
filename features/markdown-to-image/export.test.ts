@@ -130,17 +130,23 @@ describe("导出尺寸", () => {
         expect(calculateExportSize({ width: 4096, height: 4096, pixelRatio: 1 }).pixelHeight).toBe(4096)
         expect(() => calculateExportSize({ width: 16_385, height: 1, pixelRatio: 1 })).toThrow("超过导出上限")
         expect(() => calculateExportSize({ width: 4096, height: 4097, pixelRatio: 1 })).toThrow("超过导出上限")
+        expect(calculateExportSize({ width: 1024, height: 1024, pixelRatio: 4 }).pixelWidth).toBe(4096)
+        expect(() => calculateExportSize({ width: 1024, height: 1025, pixelRatio: 4 })).toThrow("超过导出上限")
     })
 })
 
 describe("文稿导出", () => {
-    it("独立于预览祖先缩放，显式设置尺寸并返回 PNG", async () => {
+    it.each([2, 4] as const)("独立于预览祖先缩放，显式设置尺寸并返回 %s 倍 PNG", async pixelRatio => {
         const element = createDocument()
         element.parentElement!.style.transform = "scale(0.5)"
         vi.spyOn(element, "getBoundingClientRect").mockReturnValue({ width: 180, height: 120 } as DOMRect)
-        const blob = await exportDocument({ element, pixelRatio: 2 })
+        screenshot.domToBlob.mockResolvedValueOnce(pngBlob({ width: 360 * pixelRatio, height: 240 * pixelRatio }))
+        const blob = await exportDocument({ element, pixelRatio })
         expect(blob.type).toBe("image/png")
-        expect(screenshot.createContext).toHaveBeenCalledWith(element, expect.objectContaining({ width: 360, height: 240, scale: 2, maximumCanvasSize: 0 }))
+        expect(screenshot.createContext).toHaveBeenCalledWith(
+            element,
+            expect.objectContaining({ width: 360, height: 240, scale: pixelRatio, maximumCanvasSize: 0 }),
+        )
         expect(screenshot.destroyContext).toHaveBeenCalledOnce()
         element.parentElement!.style.transform = ""
     })

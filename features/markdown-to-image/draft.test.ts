@@ -35,6 +35,13 @@ describe("local Markdown draft", () => {
         expect(loadDraft()).toEqual({ draft: value, error: null })
     })
 
+    it.each([1, 2, 3, 4] as const)("round-trips the %sx export setting", pixelRatio => {
+        const value = { ...draft, settings: { ...defaultSettings, pixelRatio } }
+
+        expect(saveDraft({ draft: value })).toEqual({ error: null })
+        expect(loadDraft()).toEqual({ draft: value, error: null })
+    })
+
     it("only stores versioned source and settings, excluding derived or unknown fields", () => {
         const value = { ...draft, html: "<script>bad()</script>", settings: { ...draft.settings, unknown: true } }
 
@@ -61,6 +68,8 @@ describe("local Markdown draft", () => {
         { padding: 15 },
         { preserveLineBreaks: "true" },
         { pixelRatio: 1.5 },
+        { pixelRatio: 0 },
+        { pixelRatio: 5 },
         { pixelRatio: "2" },
         { width: null },
     ])("rejects invalid settings %j", settings => {

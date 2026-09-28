@@ -12,6 +12,19 @@ export const MarkdownTheme = {
 
 export type MarkdownTheme = (typeof MarkdownTheme)[keyof typeof MarkdownTheme]
 
+export const PixelRatio = {
+    一倍: 1,
+    二倍: 2,
+    三倍: 3,
+    四倍: 4,
+} as const
+
+export type PixelRatio = (typeof PixelRatio)[keyof typeof PixelRatio]
+
+export function isPixelRatio(value: unknown): value is PixelRatio {
+    return Object.values(PixelRatio).some(ratio => ratio === value)
+}
+
 export interface DocumentSettings {
     theme: MarkdownTheme
     width: number
@@ -19,7 +32,7 @@ export interface DocumentSettings {
     lineHeight: number
     padding: number
     preserveLineBreaks: boolean
-    pixelRatio: 1 | 2 | 3
+    pixelRatio: PixelRatio
 }
 
 export interface MarkdownDraft {
@@ -34,7 +47,7 @@ export const defaultSettings: DocumentSettings = {
     lineHeight: 1.8,
     padding: 48,
     preserveLineBreaks: true,
-    pixelRatio: 2,
+    pixelRatio: PixelRatio.二倍,
 }
 
 export const settingRanges = {
