@@ -1,6 +1,6 @@
 export const MarkdownTheme = {
-    简约: "simple",
     "AI 风格": "ai",
+    简约: "simple",
     暗色: "dark",
     纸张: "paper",
     极简: "minimal",
@@ -41,7 +41,7 @@ export interface MarkdownDraft {
 }
 
 export const defaultSettings: DocumentSettings = {
-    theme: MarkdownTheme.简约,
+    theme: MarkdownTheme["AI 风格"],
     width: 720,
     fontSize: 18,
     lineHeight: 1.8,

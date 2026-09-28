@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { loadDraft, saveDraft } from "./draft"
 import { exportDocument } from "./export"
 import { MarkdownWorkspace } from "./MarkdownWorkspace"
-import { defaultSettings } from "./model"
+import { defaultSettings, MarkdownTheme } from "./model"
 
 vi.mock("./export", () => ({ exportDocument: vi.fn() }))
 vi.mock("react-hot-toast", () => ({ toast: { success: vi.fn() } }))
@@ -45,14 +45,17 @@ afterEach(() => {
 })
 
 describe("Markdown workspace interactions", () => {
-    it("defaults to 2x when there is no saved draft", async () => {
+    it("lists AI first and defaults to the AI theme at 2x when there is no saved draft", async () => {
         localStorage.clear()
         const user = userEvent.setup()
         render(<MarkdownWorkspace />)
 
+        expect(screen.getAllByRole("radio")[0]).toHaveAccessibleName(/AI 风格/)
+        expect(screen.getByRole("radio", { name: /AI 风格/ })).toHaveAttribute("aria-checked", "true")
         expect(screen.getByRole("button", { name: "2×" })).toHaveAttribute("aria-pressed", "true")
         await user.click(screen.getByRole("button", { name: "导出 PNG" }))
         await waitFor(() => expect(exportMock).toHaveBeenCalledWith(expect.objectContaining({ pixelRatio: 2 })))
+        expect(exportMock.mock.calls[0][0].element).toHaveAttribute("data-document-theme", "ai")
     })
 
     it("saves, restores and exports at 4x, then resets to 2x", async () => {
@@ -142,11 +145,13 @@ describe("Markdown workspace interactions", () => {
     })
 
     it("restores the draft and lets an intentional clear be undone and saved", async () => {
+        saveDraft({ draft: { source: savedSource, settings: { ...defaultSettings, theme: MarkdownTheme.简约 } } })
         const user = userEvent.setup()
         render(<MarkdownWorkspace />)
         const editor = screen.getByRole("textbox", { name: "Markdown 正文" })
 
         expect(editor).toHaveValue(savedSource)
+        expect(screen.getByRole("radio", { name: /简约/ })).toHaveAttribute("aria-checked", "true")
         expect(screen.getByRole("status")).toHaveTextContent("已恢复本地草稿")
         await user.click(screen.getByRole("button", { name: "清空" }))
         expect(editor).toHaveValue("")
