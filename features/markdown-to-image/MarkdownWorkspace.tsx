@@ -30,7 +30,7 @@ import { DocumentPreview } from "./DocumentPreview"
 import { loadDraft, saveDraft } from "./draft"
 import { exportDocument } from "./export"
 import { type MarkdownEncoding, countGraphemes, readMarkdownFile } from "./import-markdown"
-import { type MarkdownDraft, defaultSettings, exampleMarkdown } from "./model"
+import { type MarkdownDraft, defaultSettings, exampleMarkdown, exportFormats } from "./model"
 import { ThemePicker, WorkspaceSettings } from "./WorkspaceSettings"
 
 import "./workspace.css"
@@ -60,6 +60,7 @@ export function MarkdownWorkspace() {
     const exportLock = useRef(false)
     const { resolvedTheme, setTheme } = useTheme()
     const busy = isExporting || isImporting
+    const exportFormatLabel = exportFormats[draft.settings.exportFormat].label
 
     function updateDraft(value: MarkdownDraft) {
         setDraft(value)
@@ -120,7 +121,7 @@ export function MarkdownWorkspace() {
         setExportError(null)
 
         try {
-            const blob = await exportDocument({ element: documentRef.current, pixelRatio: draft.settings.pixelRatio })
+            const blob = await exportDocument({ element: documentRef.current, pixelRatio: draft.settings.pixelRatio, format: draft.settings.exportFormat })
             const title = draft.source.match(/^#\s+(.+)$/m)?.[1] ?? "Markdown 图片"
 
             const safeTitle = Array.from(title.replace(/[<>:"/\\|?*]/g, ""))
@@ -136,10 +137,10 @@ export function MarkdownWorkspace() {
             const url = URL.createObjectURL(blob)
             const anchor = document.createElement("a")
             anchor.href = url
-            anchor.download = `${filename}.png`
+            anchor.download = `${filename}.${draft.settings.exportFormat}`
             anchor.click()
             setTimeout(() => URL.revokeObjectURL(url), 1000)
-            toast.success("PNG 图片已生成，已开始下载")
+            toast.success(`${exportFormatLabel} 图片已生成，已开始下载`)
         } catch (error) {
             setExportError(error instanceof Error ? error.message : "导出失败，请重试。")
         } finally {
@@ -185,7 +186,7 @@ export function MarkdownWorkspace() {
                         ) : (
                             <ArrowDownToLineIcon data-icon="inline-start" />
                         )}
-                        {isExporting ? "正在生成…" : "导出 PNG"}
+                        {isExporting ? "正在生成…" : `导出 ${exportFormatLabel}`}
                     </Button>
                 </div>
             </header>
@@ -357,7 +358,7 @@ export function MarkdownWorkspace() {
                         <CheckIcon aria-hidden="true" />
                         {isComposing ? "正在输入…" : saveStatus}
                     </span>
-                    <span>PNG · 无水印 · Ctrl / ⌘ + Enter 导出</span>
+                    <span>{exportFormatLabel} · 无水印 · Ctrl / ⌘ + Enter 导出</span>
                 </footer>
             </div>
         </main>

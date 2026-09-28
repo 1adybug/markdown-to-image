@@ -2,28 +2,16 @@ import type { Options } from "modern-screenshot"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { calculateExportSize, exportDocument } from "./export"
+import { ExportFormat } from "./model"
 
 const screenshot = vi.hoisted(() => ({ createContext: vi.fn(), destroyContext: vi.fn(), domToBlob: vi.fn() }))
 vi.mock("modern-screenshot", () => screenshot)
 
-interface PngBlobParams {
-    width?: number
-    height?: number
+function pngBlob() {
+    return new Blob(["image"], { type: "image/png" })
 }
 
-function pngBlob(params: PngBlobParams = {}) {
-    const bytes = new Uint8Array(24)
-    const header = new DataView(bytes.buffer)
-    header.setUint32(0, 0x89504e47)
-    header.setUint32(16, params.width ?? 720)
-    header.setUint32(20, params.height ?? 480)
-    const blob = new Blob([bytes], { type: "image/png" })
-
-    // jsdom 的 Blob 尚未实现 arrayBuffer；生产浏览器从真实 PNG 的 IHDR 读取尺寸。
-    vi.spyOn(blob, "slice").mockReturnValue({ arrayBuffer: async () => bytes.buffer } as Blob)
-
-    return blob
-}
+const outputImage = { naturalWidth: 720, naturalHeight: 480, decode: vi.fn() }
 
 function createDocument() {
     const element = document.createElement("article")
@@ -101,9 +89,30 @@ beforeEach(() => {
     })
 
     screenshot.createContext.mockReset().mockImplementation(async (element: HTMLElement, options: Options) => ({ node: element, ...options }))
-    screenshot.domToBlob.mockReset().mockImplementation(async () => pngBlob())
+    screenshot.domToBlob.mockReset().mockImplementation(async (context: Options) => new Blob(["image"], { type: context.type }))
     screenshot.destroyContext.mockReset()
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, type: "basic", blob: async () => new Blob(["resource"]) }))
+    outputImage.naturalWidth = 720
+    outputImage.naturalHeight = 480
+    outputImage.decode.mockReset().mockResolvedValue(undefined)
+
+    vi.stubGlobal(
+        "Image",
+        class {
+            src = ""
+            naturalWidth = outputImage.naturalWidth
+            naturalHeight = outputImage.naturalHeight
+            decode = outputImage.decode
+        },
+    )
+
+    vi.stubGlobal(
+        "URL",
+        class extends URL {
+            static createObjectURL = vi.fn(() => "blob:export-test")
+            static revokeObjectURL = vi.fn()
+        },
+    )
 })
 
 afterEach(() => {
@@ -140,15 +149,44 @@ describe("文稿导出", () => {
         const element = createDocument()
         element.parentElement!.style.transform = "scale(0.5)"
         vi.spyOn(element, "getBoundingClientRect").mockReturnValue({ width: 180, height: 120 } as DOMRect)
-        screenshot.domToBlob.mockResolvedValueOnce(pngBlob({ width: 360 * pixelRatio, height: 240 * pixelRatio }))
+        outputImage.naturalWidth = 360 * pixelRatio
+        outputImage.naturalHeight = 240 * pixelRatio
         const blob = await exportDocument({ element, pixelRatio })
         expect(blob.type).toBe("image/png")
         expect(screenshot.createContext).toHaveBeenCalledWith(
             element,
-            expect.objectContaining({ width: 360, height: 240, scale: pixelRatio, maximumCanvasSize: 0 }),
+            expect.objectContaining({ width: 360, height: 240, scale: pixelRatio, maximumCanvasSize: 0, type: "image/png" }),
         )
         expect(screenshot.destroyContext).toHaveBeenCalledOnce()
         element.parentElement!.style.transform = ""
+    })
+
+    it.each([
+        { format: ExportFormat.PNG, type: "image/png", backgroundColor: undefined },
+        { format: ExportFormat.JPG, type: "image/jpeg", backgroundColor: "#ffffff" },
+        { format: ExportFormat.WebP, type: "image/webp", backgroundColor: undefined },
+    ])("按 $format 编码并解码校验最终文件", async ({ format, type, backgroundColor }) => {
+        const element = createDocument()
+        const blob = await exportDocument({ element, pixelRatio: 2, format })
+        expect(blob.type).toBe(type)
+        expect(screenshot.createContext).toHaveBeenCalledWith(element, expect.objectContaining({ type, backgroundColor }))
+        expect(URL.createObjectURL).toHaveBeenCalledWith(blob)
+        expect(outputImage.decode).toHaveBeenCalledOnce()
+        expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:export-test")
+    })
+
+    it.each([ExportFormat.JPG, ExportFormat.WebP])("拒绝浏览器把 %s 悄悄回退为 PNG", async format => {
+        screenshot.domToBlob.mockResolvedValueOnce(pngBlob())
+        await expect(exportDocument({ element: createDocument(), pixelRatio: 2, format })).rejects.toThrow("浏览器未能生成有效的")
+        expect(screenshot.destroyContext).toHaveBeenCalledOnce()
+        expect(outputImage.decode).not.toHaveBeenCalled()
+    })
+
+    it.each(Object.values(ExportFormat))("拒绝无法解码的 %s 文件并释放资源", async format => {
+        outputImage.decode.mockRejectedValueOnce(new DOMException("Invalid image", "EncodingError"))
+        await expect(exportDocument({ element: createDocument(), pixelRatio: 2, format })).rejects.toThrow("图片导出失败")
+        expect(URL.revokeObjectURL).toHaveBeenCalledOnce()
+        expect(screenshot.destroyContext).toHaveBeenCalledOnce()
     })
 
     it("字体加载失败时阻止导出", async () => {
@@ -296,8 +334,10 @@ describe("文稿导出", () => {
         expect(screenshot.destroyContext).toHaveBeenCalledTimes(2)
     })
 
-    it("拒绝被底层库自动缩小或截断的输出", async () => {
-        screenshot.domToBlob.mockResolvedValueOnce(pngBlob({ width: 360, height: 240 }))
-        await expect(exportDocument({ element: createDocument(), pixelRatio: 2 })).rejects.toThrow("图片尺寸不完整")
+    it.each(Object.values(ExportFormat))("拒绝被底层库自动缩小或截断的 %s 输出", async format => {
+        outputImage.naturalWidth = 360
+        outputImage.naturalHeight = 240
+        await expect(exportDocument({ element: createDocument(), pixelRatio: 2, format })).rejects.toThrow("图片尺寸不完整")
+        expect(URL.revokeObjectURL).toHaveBeenCalledOnce()
     })
 })

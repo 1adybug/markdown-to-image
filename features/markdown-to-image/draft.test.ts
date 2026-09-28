@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { DRAFT_STORAGE_KEY, loadDraft, saveDraft } from "./draft"
-import { type MarkdownDraft, defaultSettings, MarkdownTheme } from "./model"
+import { type MarkdownDraft, defaultSettings, ExportFormat, MarkdownTheme } from "./model"
 
 const draft: MarkdownDraft = {
     source: "# 草稿\r\n\r\n**（中文）**與繁體 👨‍👩‍👧‍👦",
@@ -42,6 +42,21 @@ describe("local Markdown draft", () => {
         expect(loadDraft()).toEqual({ draft: value, error: null })
     })
 
+    it.each(Object.values(ExportFormat))("round-trips the %s export format", exportFormat => {
+        const value = { ...draft, settings: { ...defaultSettings, exportFormat } }
+
+        expect(saveDraft({ draft: value })).toEqual({ error: null })
+        expect(loadDraft()).toEqual({ draft: value, error: null })
+    })
+
+    it("restores legacy drafts as PNG while preserving source and settings", () => {
+        const legacySettings: Partial<typeof defaultSettings> = { ...defaultSettings, pixelRatio: 4, theme: MarkdownTheme.纸张 }
+
+        delete legacySettings.exportFormat
+        stored.set(DRAFT_STORAGE_KEY, JSON.stringify({ version: 1, draft: { ...draft, settings: legacySettings } }))
+        expect(loadDraft()).toEqual({ draft: { ...draft, settings: { ...legacySettings, exportFormat: ExportFormat.PNG } }, error: null })
+    })
+
     it("only stores versioned source and settings, excluding derived or unknown fields", () => {
         const value = { ...draft, html: "<script>bad()</script>", settings: { ...draft.settings, unknown: true } }
 
@@ -71,6 +86,9 @@ describe("local Markdown draft", () => {
         { pixelRatio: 0 },
         { pixelRatio: 5 },
         { pixelRatio: "2" },
+        { exportFormat: "gif" },
+        { exportFormat: "jpeg" },
+        { exportFormat: null },
         { width: null },
     ])("rejects invalid settings %j", settings => {
         stored.set(DRAFT_STORAGE_KEY, JSON.stringify({ version: 1, draft: { ...draft, settings: { ...draft.settings, ...settings } } }))

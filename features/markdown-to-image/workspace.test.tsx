@@ -1,11 +1,12 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { toast } from "react-hot-toast"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { loadDraft, saveDraft } from "./draft"
 import { exportDocument } from "./export"
 import { MarkdownWorkspace } from "./MarkdownWorkspace"
-import { defaultSettings, MarkdownTheme } from "./model"
+import { defaultSettings, ExportFormat, MarkdownTheme } from "./model"
 
 vi.mock("./export", () => ({ exportDocument: vi.fn() }))
 vi.mock("react-hot-toast", () => ({ toast: { success: vi.fn() } }))
@@ -53,9 +54,33 @@ describe("Markdown workspace interactions", () => {
         expect(screen.getAllByRole("radio")[0]).toHaveAccessibleName(/AI 风格/)
         expect(screen.getByRole("radio", { name: /AI 风格/ })).toHaveAttribute("aria-checked", "true")
         expect(screen.getByRole("button", { name: "2×" })).toHaveAttribute("aria-pressed", "true")
+        expect(screen.getByRole("button", { name: "PNG" })).toHaveAttribute("aria-pressed", "true")
         await user.click(screen.getByRole("button", { name: "导出 PNG" }))
-        await waitFor(() => expect(exportMock).toHaveBeenCalledWith(expect.objectContaining({ pixelRatio: 2 })))
+        await waitFor(() => expect(exportMock).toHaveBeenCalledWith(expect.objectContaining({ pixelRatio: 2, format: ExportFormat.PNG })))
         expect(exportMock.mock.calls[0][0].element).toHaveAttribute("data-document-theme", "ai")
+    })
+
+    it.each([
+        { label: "PNG", format: ExportFormat.PNG },
+        { label: "JPG", format: ExportFormat.JPG },
+        { label: "WebP", format: ExportFormat.WebP },
+    ])("saves, restores and downloads $label with the selected extension", async ({ label, format }) => {
+        const user = userEvent.setup()
+        const { unmount } = render(<MarkdownWorkspace />)
+        await user.click(screen.getByRole("button", { name: label }))
+        expect(screen.getByRole("button", { name: label })).toHaveAttribute("aria-pressed", "true")
+        await waitFor(() => expect(loadDraft().draft?.settings.exportFormat).toBe(format))
+        unmount()
+        render(<MarkdownWorkspace />)
+
+        expect(screen.getByRole("button", { name: label })).toHaveAttribute("aria-pressed", "true")
+        await user.click(screen.getByRole("button", { name: `导出 ${label}` }))
+        await waitFor(() => expect(exportMock).toHaveBeenCalledWith(expect.objectContaining({ format })))
+        expect(vi.mocked(HTMLAnchorElement.prototype.click).mock.contexts[0]).toHaveProperty("download", `我的草稿.${format}`)
+        expect(toast.success).toHaveBeenCalledWith(`${label} 图片已生成，已开始下载`)
+
+        await user.click(screen.getByRole("button", { name: "重置" }))
+        expect(screen.getByRole("button", { name: "PNG" })).toHaveAttribute("aria-pressed", "true")
     })
 
     it("saves, restores and exports at 4x, then resets to 2x", async () => {
@@ -133,6 +158,7 @@ describe("Markdown workspace interactions", () => {
         expect(screen.getByRole("button", { name: "预览" })).toBeDisabled()
         expect(screen.getByRole("button", { name: "100%" })).toBeDisabled()
         expect(screen.getByRole("button", { name: "清空" })).toBeDisabled()
+        for (const label of ["PNG", "JPG", "WebP"]) expect(screen.getByRole("button", { name: label })).toBeDisabled()
 
         await act(() => pending.reject(new Error("图片跨域加载失败")))
         expect(await screen.findByText("图片跨域加载失败")).toBeInTheDocument()

@@ -1,4 +1,4 @@
-import { type DocumentSettings, isPixelRatio } from "./model"
+import { type DocumentSettings, ExportFormat, exportFormats, isExportFormat, isPixelRatio } from "./model"
 
 const resourceTimeout = 20_000
 const maximumDimension = 16_384
@@ -250,11 +250,14 @@ function assertImagesAvailable(element: HTMLElement) {
 export interface ExportDocumentParams {
     element: HTMLElement
     pixelRatio: DocumentSettings["pixelRatio"]
+    format?: ExportFormat
     filename?: string
 }
 
 export async function exportDocument(params: ExportDocumentParams): Promise<Blob> {
-    const { element, pixelRatio } = params
+    const { element, pixelRatio, format = ExportFormat.PNG } = params
+    if (!isExportFormat(format)) throw new Error("请选择 PNG、JPG 或 WebP 图片格式。")
+    const { label, mimeType } = exportFormats[format]
     const ownerWindow = element.ownerDocument.defaultView
     if (!ownerWindow || !element.isConnected) throw new Error("预览尚未就绪，请等待文稿显示后重试。")
     assertImagesAvailable(element)
@@ -308,7 +311,9 @@ export async function exportDocument(params: ExportDocumentParams): Promise<Blob
             width: size.width,
             height: size.height,
             scale: pixelRatio,
-            type: "image/png",
+            type: mimeType,
+            quality: 0.95,
+            backgroundColor: format === ExportFormat.JPG ? "#ffffff" : undefined,
             maximumCanvasSize: 0,
             timeout: resourceTimeout,
             font: fontCssText ? { cssText: fontCssText } : false,
@@ -327,15 +332,23 @@ export async function exportDocument(params: ExportDocumentParams): Promise<Blob
         })
         cleanup = () => destroyContext(context)
         const blob = await domToBlob(context)
-        if (!blob.size || blob.type !== "image/png") throw new Error("浏览器未能生成有效的 PNG 图片，请降低倍率后重试。")
-        const header = new DataView(await blob.slice(0, 24).arrayBuffer())
-        if (
-            header.byteLength < 24 ||
-            header.getUint32(0) !== 0x89504e47 ||
-            header.getUint32(16) !== size.pixelWidth ||
-            header.getUint32(20) !== size.pixelHeight
-        )
-            throw new Error("生成的图片尺寸不完整，请降低倍率或缩短文稿后重试。")
+        if (!blob.size || blob.type !== mimeType) throw new Error(`浏览器未能生成有效的 ${label} 图片，请切换格式或降低倍率后重试。`)
+
+        // 让浏览器解码最终文件，三种格式共用完整性与输出尺寸校验。
+        const image = new Image()
+
+        const url = URL.createObjectURL(blob)
+
+        try {
+            image.src = url
+            await withTimeout({ promise: image.decode(), message: "生成的图片解码超时，请降低倍率后重试。" })
+            if (image.naturalWidth !== size.pixelWidth || image.naturalHeight !== size.pixelHeight)
+                throw new Error("生成的图片尺寸不完整，请降低倍率或缩短文稿后重试。")
+        } finally {
+            image.src = ""
+            URL.revokeObjectURL(url)
+        }
+
         return blob
     } catch (cause) {
         if (cause instanceof Error && /[\u3400-\u9fff]/u.test(cause.message)) throw cause

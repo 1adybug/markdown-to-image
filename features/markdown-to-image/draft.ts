@@ -1,4 +1,4 @@
-import { type DocumentSettings, type MarkdownDraft, isPixelRatio, MarkdownTheme, settingRanges } from "./model"
+import { type DocumentSettings, type MarkdownDraft, ExportFormat, isExportFormat, isPixelRatio, MarkdownTheme, settingRanges } from "./model"
 
 export const DRAFT_STORAGE_KEY = "markdown-to-image:draft"
 
@@ -31,6 +31,8 @@ function parseDraft(value: unknown): MarkdownDraft | null {
     if (!isRecord(value) || typeof value.source !== "string" || !isRecord(value.settings)) return null
 
     const settings = value.settings
+    // 旧版草稿没有格式字段，沿用当时的 PNG 导出行为。
+    const exportFormat = settings.exportFormat === undefined ? ExportFormat.PNG : settings.exportFormat
 
     if (
         typeof settings.theme !== "string" ||
@@ -40,7 +42,8 @@ function parseDraft(value: unknown): MarkdownDraft | null {
         !isSettingNumber(settings.lineHeight, settingRanges.lineHeight) ||
         !isSettingNumber(settings.padding, settingRanges.padding) ||
         typeof settings.preserveLineBreaks !== "boolean" ||
-        !isPixelRatio(settings.pixelRatio)
+        !isPixelRatio(settings.pixelRatio) ||
+        !isExportFormat(exportFormat)
     )
         return null
 
@@ -53,6 +56,7 @@ function parseDraft(value: unknown): MarkdownDraft | null {
         padding: settings.padding,
         preserveLineBreaks: settings.preserveLineBreaks,
         pixelRatio: settings.pixelRatio,
+        exportFormat,
     }
 
     return { source: value.source, settings: parsedSettings }

@@ -10,7 +10,17 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Switch } from "@/components/ui/switch"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
-import { type DocumentSettings, defaultSettings, isPixelRatio, MarkdownTheme, PixelRatio, settingRanges } from "./model"
+import {
+    type DocumentSettings,
+    defaultSettings,
+    ExportFormat,
+    exportFormats,
+    isExportFormat,
+    isPixelRatio,
+    MarkdownTheme,
+    PixelRatio,
+    settingRanges,
+} from "./model"
 
 export interface WorkspaceSettingsProps {
     data: DocumentSettings
@@ -134,6 +144,27 @@ export function WorkspaceSettings({ data, disabled, onChange }: WorkspaceSetting
                     {data.fontSize} px<span className="summary-dot">·</span>
                     {data.lineHeight} 倍行高
                 </span>
+                <div className="export-format">
+                    <span id="format-label">图片格式</span>
+                    <ToggleGroup
+                        value={[data.exportFormat]}
+                        disabled={disabled}
+                        onValueChange={values => {
+                            const value = values[0]
+                            if (isExportFormat(value)) onChange({ ...data, exportFormat: value })
+                        }}
+                        aria-labelledby="format-label"
+                        variant="outline"
+                        spacing={0}
+                        size="sm"
+                    >
+                        {Object.values(ExportFormat).map(value => (
+                            <ToggleGroupItem key={value} value={value}>
+                                {exportFormats[value].label}
+                            </ToggleGroupItem>
+                        ))}
+                    </ToggleGroup>
+                </div>
                 <div className="export-scale">
                     <span id="scale-label">清晰度</span>
                     <ToggleGroup

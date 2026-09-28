@@ -25,6 +25,24 @@ export function isPixelRatio(value: unknown): value is PixelRatio {
     return Object.values(PixelRatio).some(ratio => ratio === value)
 }
 
+export const ExportFormat = {
+    PNG: "png",
+    JPG: "jpg",
+    WebP: "webp",
+} as const
+
+export type ExportFormat = (typeof ExportFormat)[keyof typeof ExportFormat]
+
+export const exportFormats = {
+    [ExportFormat.PNG]: { label: "PNG", mimeType: "image/png" },
+    [ExportFormat.JPG]: { label: "JPG", mimeType: "image/jpeg" },
+    [ExportFormat.WebP]: { label: "WebP", mimeType: "image/webp" },
+} as const
+
+export function isExportFormat(value: unknown): value is ExportFormat {
+    return Object.values(ExportFormat).some(format => format === value)
+}
+
 export interface DocumentSettings {
     theme: MarkdownTheme
     width: number
@@ -33,6 +51,7 @@ export interface DocumentSettings {
     padding: number
     preserveLineBreaks: boolean
     pixelRatio: PixelRatio
+    exportFormat: ExportFormat
 }
 
 export interface MarkdownDraft {
@@ -48,6 +67,7 @@ export const defaultSettings: DocumentSettings = {
     padding: 48,
     preserveLineBreaks: true,
     pixelRatio: PixelRatio.二倍,
+    exportFormat: ExportFormat.PNG,
 }
 
 export const settingRanges = {
