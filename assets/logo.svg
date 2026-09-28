@@ -1,8 +1,105 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
-    <title>字里成图</title>
-    <rect id="background" width="512" height="512" rx="112" fill="#6D28D9" />
-    <path d="M160 112H304L384 192V360C384 382.091 366.091 400 344 400H168C145.909 400 128 382.091 128 360V144C128 126.327 142.327 112 160 112Z" fill="#FFFFFF" />
-    <path d="M304 112V160C304 177.673 318.327 192 336 192H384L304 112Z" fill="#C4B5FD" />
-    <path d="M176 184H248M176 232H216" stroke="#6D28D9" stroke-width="20" stroke-linecap="round" />
-    <path d="M160 336L222.686 273.314C228.935 267.065 239.065 267.065 245.314 273.314L280 308L302.686 285.314C308.935 279.065 319.065 279.065 325.314 285.314L352 312V352C352 360.837 344.837 368 336 368H176C167.163 368 160 360.837 160 352V336Z" fill="#6D28D9" />
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="1024" height="1024" viewBox="0 0 1024 1024"
+     fill="none" role="img" aria-labelledby="logo-title logo-description">
+  <title id="logo-title">Markdown 转图片 Logo</title>
+  <desc id="logo-description">紫色圆角底板上，一张左倾的 Markdown 文档经黄色弯箭头转换为右倾的彩色风景图片，左下角配有珊瑚橙色四角星。所有可见图形均为可编辑的 SVG 矢量元素。</desc>
+
+  <defs>
+    <linearGradient id="document-white" x1="335" y1="245" x2="635" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="0.62" stop-color="#FEFEFF"/>
+      <stop offset="1" stop-color="#F0F0FA"/>
+    </linearGradient>
+    <linearGradient id="document-lavender" x1="313" y1="482" x2="565" y2="618" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#BBB8FE"/>
+      <stop offset="1" stop-color="#C5C2FD"/>
+    </linearGradient>
+    <linearGradient id="arrow-yellow" x1="729" y1="252" x2="944" y2="452" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFEB7B"/>
+      <stop offset="1" stop-color="#FFE673"/>
+    </linearGradient>
+    <linearGradient id="sun-yellow" x1="858" y1="576" x2="930" y2="692" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE971"/>
+      <stop offset="1" stop-color="#FFE779"/>
+    </linearGradient>
+    <linearGradient id="mint-mountain" x1="642" y1="674" x2="716" y2="871" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8DF0BA"/>
+      <stop offset="1" stop-color="#85EABA"/>
+    </linearGradient>
+    <linearGradient id="green-mountain" x1="552" y1="816" x2="637" y2="964" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#45CD99"/>
+      <stop offset="1" stop-color="#40D09A"/>
+    </linearGradient>
+    <linearGradient id="coral" x1="745" y1="729" x2="923" y2="1006" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF806A"/>
+      <stop offset="1" stop-color="#FF7D68"/>
+    </linearGradient>
+
+    <path id="app-shape" transform="translate(0 627) scale(1 1.0146771037181996) translate(0 -627)" d="M326 116H929C1068 116 1146 201 1146 340V914C1146 1057 1069 1138 930 1138H326C184 1138 109 1058 109 914V340C109 200 189 116 326 116Z"/>
+    <path id="photo-frame-shape" d="M638 445L1009 508C1057 516 1088 561 1080 608L1020 990C1012 1038 973 1069 927 1060L490 981C448 973 423 934 433 889L531 511C544 464 590 435 638 445Z"/>
+    <path id="photo-window-shape" d="M634 492L991 550C1018 555 1037 578 1031 605L972 969C968 994 950 1011 925 1005L518 930C492 925 479 909 486 886L574 533C582 505 606 486 634 492Z"/>
+    <clipPath id="app-clip">
+      <use href="#app-shape" xlink:href="#app-shape"/>
+    </clipPath>
+    <clipPath id="photo-clip">
+      <use href="#photo-window-shape" xlink:href="#photo-window-shape"/>
+    </clipPath>
+    <filter id="photo-shadow" x="350" y="376" width="784" height="748" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="17"/>
+    </filter>
+  </defs>
+
+  <!-- Square background; foreground artwork keeps its original proportions. -->
+  <g id="logo" transform="scale(0.9874638379942141) translate(-109 -108.5)">
+  <g id="app-background">
+    <use href="#app-shape" xlink:href="#app-shape" fill="#6d28d9"/>
+  </g>
+
+  <g id="markdown-document">
+    <path id="document-sheet" fill="url(#document-white)"
+          d="M258 261L585 194C620 184 651 205 660 243L738 584C746 622 724 651 686 659L344 729C307 738 278 716 270 680L203 342C195 306 220 270 258 261Z"/>
+
+    <g id="markdown-symbol" fill="#403BFF">
+      <path id="letter-m"
+            d="M274 351C271 335 278 325 293 322L300 320C310 318 316 320 324 326L367 359Q370 362 373 356L399 310C405 298 412 295 424 292L429 291C441 290 451 299 454 315L473 405C477 421 469 431 455 434L450 435C437 438 427 431 425 417L414 365L390 406C384 417 378 419 367 411L330 384L341 438C344 453 338 462 324 465L320 466C306 469 296 462 294 448Z"/>
+      <path id="markdown-down-arrow"
+            d="M532 278L540 276C549 274 557 280 559 290L567 329L588 324C599 320 608 329 601 340L570 393C565 402 558 405 550 400L500 364C490 358 492 345 504 342L526 337L518 300C515 289 520 281 532 278Z"/>
+    </g>
+
+    <g id="document-lines" stroke="url(#document-lavender)" stroke-width="44" stroke-linecap="round">
+      <path d="M323 525L588 465"/>
+      <path d="M336 597L455 573"/>
+    </g>
+  </g>
+
+  <g id="conversion-arrow">
+    <path fill="url(#arrow-yellow)"
+          d="M721 253C800 240 873 292 911 354L937 341C952 333 966 345 960 362L934 442C931 455 921 461 910 454L833 414C820 408 820 391 834 385L861 375C828 327 776 297 723 294C710 294 702 286 702 275C700 264 708 254 721 253Z"/>
+  </g>
+
+  <g id="sparkle">
+    <path fill="#FF7F69"
+          d="M297 779C302 779 304 782 306 789C316 823 334 840 370 850C380 853 380 861 370 865C335 876 317 893 306 928C303 940 291 940 288 928C278 893 260 876 225 866C215 863 215 852 225 849C260 839 278 821 288 787C290 781 293 779 297 779Z"/>
+  </g>
+
+  <g id="photo-card">
+    <g clip-path="url(#app-clip)">
+      <use href="#photo-frame-shape" xlink:href="#photo-frame-shape" transform="translate(-8 10)" fill="#222B84" opacity="0.13" filter="url(#photo-shadow)"/>
+    </g>
+    <use id="photo-white-frame" href="#photo-frame-shape" xlink:href="#photo-frame-shape" fill="#FFFFFF"/>
+
+    <g id="photo-landscape" clip-path="url(#photo-clip)">
+      <path id="sky" d="M450 475H1055V1025H450Z" fill="#0BA3FD"/>
+      <circle id="sun" cx="894.5" cy="633.5" r="62" fill="url(#sun-yellow)"/>
+
+      <path id="rear-mountain" fill="url(#mint-mountain)"
+            d="M478 806L659 665C677 651 699 655 713 675L806 820L749 981L458 950Z"/>
+      <path id="front-green-mountain" fill="url(#green-mountain)"
+            d="M466 876L600 790C627 772 654 777 677 799L739 874L661 983L460 947Z"/>
+      <path id="coral-mountain" fill="url(#coral)"
+            d="M574 943L848 737C868 721 891 727 907 748L1000 875L996 1032L558 968Z"/>
+    </g>
+  </g>
+  </g>
 </svg>

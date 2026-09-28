@@ -7,8 +7,26 @@ import { Resvg } from "@resvg/resvg-js"
 
 const root = new URL("../", import.meta.url)
 const source = await readFile(new URL("assets/logo.svg", root), "utf8")
-const fullBleed = source.replace('rx="112"', 'rx="0"')
-assert.notEqual(source, fullBleed, "Logo 背景必须包含 rx=112，才能生成系统裁切的满版图标。")
+const logo = new Resvg(source, { font: { loadSystemFonts: false } })
+assert.equal(logo.width, logo.height, "Logo 必须使用正方形画布。")
+const size = logo.width
+
+function withBackground(scale = 1) {
+    // Embed the complete vector master: paths, gradients, filters and its own
+    // viewBox stay intact. Only installation padding and transparency change.
+    const offset = (size * (1 - scale)) / 2
+    const artwork = source.replace(/<\?xml[^?]*\?>\s*/, "")
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <rect width="${size}" height="${size}" fill="#6D28D9" />
+    <g transform="translate(${offset} ${offset}) scale(${scale})">${artwork}</g>
+</svg>
+`
+}
+
+const fullBleed = withBackground()
+
+// This artwork needs additional space to fit Android's circular safe area.
+const maskable = withBackground(0.62)
 
 function png(svg, size) {
     return new Resvg(svg, { fitTo: { mode: "width", value: size }, font: { loadSystemFonts: false } }).render().asPng()
@@ -38,10 +56,10 @@ function ico(sizes) {
 
 const outputs = new Map([
     ["icons/logo.svg", source],
-    ["icons/maskable.svg", fullBleed],
+    ["icons/maskable.svg", maskable],
     ["icons/icon-192.png", png(source, 192)],
     ["icons/icon-512.png", png(source, 512)],
-    ["icons/maskable-512.png", png(fullBleed, 512)],
+    ["icons/maskable-512.png", png(maskable, 512)],
     ["apple-touch-icon.png", png(fullBleed, 180)],
     ["favicon.ico", ico([16, 32, 48])],
 ])

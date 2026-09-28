@@ -183,18 +183,22 @@ describe("installation icons", () => {
 
     it("keeps the maskable artwork inside the safe circle with a fully opaque background", async () => {
         const svg = await readFile(new URL("public/icons/maskable.svg", root), "utf8")
-        const { pixels, width } = new Resvg(svg, { font: { loadSystemFonts: false } }).render()
+        const { pixels, width, height } = new Resvg(svg, { fitTo: { mode: "width", value: 512 }, font: { loadSystemFonts: false } }).render()
         let visiblePixels = 0
+        let opaque = true
+        let maximumRadius = 0
 
         for (let offset = 0; offset < pixels.length; offset += 4) {
-            expect(pixels[offset + 3]).toBe(255)
+            if (pixels[offset + 3] !== 255) opaque = false
             if (pixels[offset] === 109 && pixels[offset + 1] === 40 && pixels[offset + 2] === 217) continue
             visiblePixels++
             const x = (offset / 4) % width
             const y = Math.floor(offset / 4 / width)
-            expect(Math.hypot(x + 0.5 - 256, y + 0.5 - 256)).toBeLessThanOrEqual(512 * 0.4)
+            maximumRadius = Math.max(maximumRadius, Math.hypot(x + 0.5 - width / 2, y + 0.5 - height / 2))
         }
 
+        expect(opaque).toBe(true)
+        expect(maximumRadius).toBeLessThanOrEqual(Math.min(width, height) * 0.4)
         expect(visiblePixels).toBeGreaterThan(20_000)
     })
 })
