@@ -4,6 +4,7 @@ import { cn } from "cn"
 import {
     ArrowDownToLineIcon,
     CheckIcon,
+    CopyIcon,
     FileTextIcon,
     FolderOpenIcon,
     LoaderCircleIcon,
@@ -26,6 +27,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Textarea } from "@/components/ui/textarea"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
+import { copyDocument } from "./copy"
 import { DocumentPreview } from "./DocumentPreview"
 import { loadDraft, saveDraft } from "./draft"
 import { exportDocument } from "./export"
@@ -40,6 +42,18 @@ const encodings = [
     { value: "gb18030", label: "GB18030 / GBK" },
 ]
 
+const ImageAction = {
+    导出: "download",
+    复制: "copy",
+} as const
+
+type ImageAction = (typeof ImageAction)[keyof typeof ImageAction]
+
+interface ImageOutputError {
+    action: ImageAction
+    message: string
+}
+
 export function MarkdownWorkspace() {
     const [initial] = useState(loadDraft)
     const [draft, setDraft] = useState<MarkdownDraft>(() => initial.draft ?? { source: exampleMarkdown, settings: { ...defaultSettings } })
@@ -48,18 +62,21 @@ export function MarkdownWorkspace() {
     const [saveStatus, setSaveStatus] = useState(initial.draft ? "已恢复本地草稿" : "内容仅保存在此浏览器")
     const [previousSource, setPreviousSource] = useState<string | null>(null)
     const [isComposing, setIsComposing] = useState(false)
-    const [isExporting, setIsExporting] = useState(false)
+    const [imageAction, setImageAction] = useState<ImageAction | null>(null)
     const [isImporting, setIsImporting] = useState(false)
-    const [exportError, setExportError] = useState<string | null>(null)
+    const [outputError, setOutputError] = useState<ImageOutputError | null>(null)
     const [importError, setImportError] = useState<string | null>(null)
     const [importFile, setImportFile] = useState<File | null>(null)
     const [encoding, setEncoding] = useState<MarkdownEncoding>("utf-8")
     const [mobileView, setMobileView] = useState("editor")
     const fileInputRef = useRef<HTMLInputElement>(null)
     const documentRef = useRef<HTMLDivElement>(null)
-    const exportLock = useRef(false)
+    const outputLock = useRef(false)
     const { resolvedTheme, setTheme } = useTheme()
-    const busy = isExporting || isImporting
+    const isOutputting = imageAction !== null
+    const isCopying = imageAction === ImageAction.复制
+    const isDownloading = imageAction === ImageAction.导出
+    const busy = isOutputting || isImporting
     const exportFormatLabel = exportFormats[draft.settings.exportFormat].label
 
     function updateDraft(value: MarkdownDraft) {
@@ -113,14 +130,20 @@ export function MarkdownWorkspace() {
         }
     }
 
-    async function handleExport() {
-        if (exportLock.current || busy || isComposing || !draft.source.trim() || !documentRef.current) return
-        exportLock.current = true
-        setIsExporting(true)
+    async function handleImageOutput(action: ImageAction) {
+        if (outputLock.current || busy || isComposing || !draft.source.trim() || !documentRef.current) return
+        outputLock.current = true
+        setImageAction(action)
         setMobileView("preview")
-        setExportError(null)
+        setOutputError(null)
 
         try {
+            if (action === ImageAction.复制) {
+                await copyDocument({ element: documentRef.current, pixelRatio: draft.settings.pixelRatio })
+                toast.success("图片已复制，可以直接粘贴")
+                return
+            }
+
             const blob = await exportDocument({ element: documentRef.current, pixelRatio: draft.settings.pixelRatio, format: draft.settings.exportFormat })
             const title = draft.source.match(/^#\s+(.+)$/m)?.[1] ?? "Markdown 图片"
 
@@ -142,10 +165,10 @@ export function MarkdownWorkspace() {
             setTimeout(() => URL.revokeObjectURL(url), 1000)
             toast.success(`${exportFormatLabel} 图片已生成，已开始下载`)
         } catch (error) {
-            setExportError(error instanceof Error ? error.message : "导出失败，请重试。")
+            setOutputError({ action, message: error instanceof Error ? error.message : "图片生成失败，请重试。" })
         } finally {
-            exportLock.current = false
-            setIsExporting(false)
+            outputLock.current = false
+            setImageAction(null)
         }
     }
 
@@ -168,7 +191,7 @@ export function MarkdownWorkspace() {
                     <Button
                         variant="ghost"
                         size="icon"
-                        disabled={isExporting}
+                        disabled={isOutputting}
                         aria-label={resolvedTheme === "dark" ? "切换浅色界面" : "切换深色界面"}
                         onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
                     >
@@ -176,17 +199,28 @@ export function MarkdownWorkspace() {
                     </Button>
                     <Button
                         className="export-button"
+                        variant="outline"
                         size="lg"
                         disabled={busy || isComposing || !draft.source.trim()}
-                        aria-busy={isExporting}
-                        onClick={handleExport}
+                        aria-busy={isCopying}
+                        onClick={() => void handleImageOutput(ImageAction.复制)}
                     >
-                        {isExporting ? (
+                        {isCopying ? <LoaderCircleIcon className="animate-spin" data-icon="inline-start" /> : <CopyIcon data-icon="inline-start" />}
+                        {isCopying ? "正在复制…" : "复制图片"}
+                    </Button>
+                    <Button
+                        className="export-button"
+                        size="lg"
+                        disabled={busy || isComposing || !draft.source.trim()}
+                        aria-busy={isDownloading}
+                        onClick={() => void handleImageOutput(ImageAction.导出)}
+                    >
+                        {isDownloading ? (
                             <LoaderCircleIcon className="animate-spin" data-icon="inline-start" />
                         ) : (
                             <ArrowDownToLineIcon data-icon="inline-start" />
                         )}
-                        {isExporting ? "正在生成…" : `导出 ${exportFormatLabel}`}
+                        {isDownloading ? "正在生成…" : `导出 ${exportFormatLabel}`}
                     </Button>
                 </div>
             </header>
@@ -210,10 +244,10 @@ export function MarkdownWorkspace() {
                         </AlertDescription>
                     </Alert>
                 )}
-                {exportError && (
+                {outputError && (
                     <Alert variant="destructive">
-                        <AlertTitle>图片暂未导出</AlertTitle>
-                        <AlertDescription>{exportError}</AlertDescription>
+                        <AlertTitle>{outputError.action === ImageAction.复制 ? "图片暂未复制" : "图片暂未导出"}</AlertTitle>
+                        <AlertDescription>{outputError.message}</AlertDescription>
                     </Alert>
                 )}
                 <ThemePicker data={draft.settings} disabled={busy} onChange={settings => updateDraft({ ...draft, settings })} />
@@ -221,7 +255,7 @@ export function MarkdownWorkspace() {
                 <div className="mobile-view-switch">
                     <ToggleGroup
                         value={[mobileView]}
-                        disabled={isExporting}
+                        disabled={isOutputting}
                         onValueChange={values => {
                             if (values[0]) setMobileView(values[0])
                         }}
@@ -322,7 +356,7 @@ export function MarkdownWorkspace() {
                                 onKeyDown={event => {
                                     if ((event.ctrlKey || event.metaKey) && event.key === "Enter" && !event.nativeEvent.isComposing && !isComposing) {
                                         event.preventDefault()
-                                        void handleExport()
+                                        void handleImageOutput(ImageAction.导出)
                                     }
                                 }}
                             />
@@ -351,7 +385,7 @@ export function MarkdownWorkspace() {
                             </div>
                         </footer>
                     </section>
-                    <DocumentPreview data={draft} documentRef={documentRef} disabled={isExporting} />
+                    <DocumentPreview data={draft} documentRef={documentRef} disabled={isOutputting} />
                 </div>
                 <footer className="workspace-status">
                     <span className={cn("save-status", saveError && "text-destructive")} role="status">

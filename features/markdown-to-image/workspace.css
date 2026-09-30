@@ -347,6 +347,7 @@
         padding: 14px 16px;
         min-height: 72px;
         gap: 8px;
+        flex-wrap: wrap;
     }
     .workspace-brand {
         gap: 9px;
@@ -359,7 +360,9 @@
         height: 35px;
     }
     .header-actions {
+        width: 100%;
         gap: 7px;
+        justify-content: flex-end;
     }
     .privacy-note {
         display: none;
