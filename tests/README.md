@@ -1,5 +1,12 @@
 # 验证记录
 
+## 2026-10-21：Vercel PWA 构建修复
+
+- PWA 生成器改用 Next.js 构建完成钩子提供的首页和静态文件路径，不再假设 `.next/server/app/index.html` 存在；生成 Worker 后才调用平台适配器打包。
+- 回归测试覆盖本地与适配器目录、首页和资源变更后的缓存版本、缺失或动态首页拒绝生成、首次部署的 Worker 打包顺序，以及通过 `NEXT_ADAPTER_PATH` 加载 ESM / CommonJS 平台适配器和保留配置钩子。
+- `pnpm typecheck`、`pnpm lint`、`pnpm test`（10 个文件、253 项测试）及 `pnpm install --frozen-lockfile --lockfile-only --ignore-scripts` 通过；锁文件纳入项目，Vercel 使用 Corepack 和冻结安装。
+- 本轮未执行生产构建、启动服务或部署；Vercel 实际部署产物与线上离线行为尚未重新验收。
+
 ## 2026-10-21：Next.js Serverless 迁移
 
 - 使用 Node.js 24、Next.js 16.4.2 的本地生产实例验证，首页静态生成，`/api/image` 为动态 Route Handler。

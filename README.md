@@ -44,7 +44,7 @@ pnpm icons:generate
 pnpm icons:check
 ```
 
-`pnpm build` 会先生成图标，执行 Next.js 生产构建，再从首页 HTML、`_next/static` 和公开品牌资源生成带内容版本的 `public/sw.js`，包含导出所需的字体和动态脚本。图片代理、RSC 请求与远程图片不会进入离线缓存。服务器需原样提供 `/sw.js`（JavaScript MIME 类型）、`/manifest.webmanifest`（`application/manifest+json`）及图标，不能将这些资源重写为 HTML；首页、Manifest 与 `sw.js` 建议使用 `Cache-Control: no-cache`，不能统一设置长期不可变缓存。开发模式不注册 Service Worker，避免缓存干扰热更新。安装与离线验收应使用正式构建和 HTTPS（本机可用 localhost）。
+`pnpm build` 会先生成图标，再执行 Next.js 生产构建。PWA 适配器在构建完成钩子中，根据 Next.js 提供的首页与静态资源路径、公开品牌资源生成带内容版本的 `public/sw.js`，包含导出所需的字体和动态脚本；随后交给平台适配器打包，确保首次部署也包含 Worker。本地与 Vercel 共用这条流程，不依赖 `.next` 内部目录结构。图片代理、RSC 请求与远程图片不会进入离线缓存。服务器需原样提供 `/sw.js`（JavaScript MIME 类型）、`/manifest.webmanifest`（`application/manifest+json`）及图标，不能将这些资源重写为 HTML；首页、Manifest 与 `sw.js` 建议使用 `Cache-Control: no-cache`，不能统一设置长期不可变缓存。开发模式不注册 Service Worker，避免缓存干扰热更新。安装与离线验收应使用正式构建和 HTTPS（本机可用 localhost）。
 
 沿用 `.browserslistrc` 的 Chrome / Edge 111+、Firefox 128+、Safari 16.4+ 基线。页面声明 `viewport-fit=cover`，四边安全区由共享根布局消费一次，固定通知在自身边界处理；保留自然页面滚动与缩放。文件导入、图片下载和复制继续沿用现有能力检测与错误反馈。以上源码与自动检查不能替代 Windows / Android 安装、iOS 主屏幕启动、软键盘和横竖屏真机验收。
 
@@ -68,7 +68,7 @@ $env:PORT = "5174"
 pnpm dev
 ```
 
-本地生产验收使用 `pnpm build` 后执行 `pnpm start`。仓库的 `vercel.json` 已指定 Next.js、`pnpm build`（包含离线资源生成）及框架默认输出目录，`package.json` 指定 Node.js 24；导入 Vercel 时沿用这些配置，不要设置为 `dist` 或纯静态导出。图片代理是 Node.js Serverless Function，不依赖持久磁盘、数据库、账号环境变量或独立后端。线上网络可达性需部署后单独验证。
+本地生产验收使用 `pnpm build` 后执行 `pnpm start`。仓库的 `vercel.json` 已指定 Next.js、`pnpm build`（包含离线资源生成）及框架默认输出目录，`package.json` 指定 Node.js 24；Vercel 安装时启用 Corepack，按 `packageManager` 中的 pnpm 版本和已纳入版本控制的 `pnpm-lock.yaml` 执行冻结安装。导入 Vercel 时沿用这些配置，不要设置为 `dist` 或纯静态导出。图片代理是 Node.js Serverless Function，不依赖持久磁盘、数据库、账号环境变量或独立后端。线上网络可达性需部署后单独验证。
 
 本机代理软件的 Fake-IP DNS 模式可能把公网图片域名解析成 `198.18.x.x` 等保留地址，此时图片代理会返回 403。开发环境需为目标图片域名使用真实公网 DNS 结果；不要放开保留地址检查。普通浏览器能通过本机代理打开图片，不代表服务端已取得可安全连接的公网地址。
 

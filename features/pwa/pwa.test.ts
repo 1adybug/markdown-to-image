@@ -1,38 +1,74 @@
 // @vitest-environment node
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
+import { execFile } from "node:child_process"
+import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
-import { join, resolve } from "node:path"
+import { dirname, join, resolve } from "node:path"
+import process from "node:process"
+import { promisify } from "node:util"
 import { runInNewContext } from "node:vm"
 
 import { Resvg } from "@resvg/resvg-js"
+import type { NextAdapter } from "next"
+import { AdapterOutputType } from "next/constants"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
+import { createPwaAdapter } from "./adapter.mjs"
 import { writeServiceWorker } from "./build.mjs"
 
 const temporaryDirectories: string[] = []
 
-async function createSite() {
+async function createSite(layout = "local") {
     const distPath = await mkdtemp(join(tmpdir(), "zili-pwa-test-"))
     temporaryDirectories.push(distPath)
-    await mkdir(join(distPath, ".next/static"), { recursive: true })
-    await mkdir(join(distPath, ".next/server/app"), { recursive: true })
-    await mkdir(join(distPath, "public"))
+    const htmlFile = layout === "local" ? ".next/server/app/index.html" : "build-output/server/route-cache/APP_PAGE/home/$/index.html"
+    const staticDirectory = layout === "local" ? ".next/static" : "build-output/static"
 
-    for (const [file, body] of Object.entries({
-        ".next/server/app/index.html": "<html>version one</html>",
-        ".next/server/app/index.rsc": "RSC response",
+    const files = {
+        [htmlFile]: "<html>version one</html>",
+        [htmlFile.replace(".html", ".rsc")]: "RSC response",
         "public/manifest.webmanifest": "{}",
-        ".next/static/app.js": "app code",
-        ".next/static/export.js": "lazy export code",
-        ".next/static/app.css": "font rules",
-        ".next/static/chinese.woff2": "Chinese font",
-        ".next/static/app.js.map": "debug map",
+        [`${staticDirectory}/app.js`]: "app code",
+        [`${staticDirectory}/export.js`]: "lazy export code",
+        [`${staticDirectory}/app.css`]: "font rules",
+        [`${staticDirectory}/chinese.woff2`]: "Chinese font",
+        [`${staticDirectory}/app.js.map`]: "debug map",
         "account.json": "private response",
         "login.html": "login page",
-    }))
-        await writeFile(join(distPath, file), body)
+    }
 
-    return distPath
+    for (const [file, body] of Object.entries(files)) {
+        await mkdir(dirname(join(distPath, file)), { recursive: true })
+        await writeFile(join(distPath, file), body)
+    }
+
+    const outputs = {
+        prerenders: [
+            {
+                id: "/",
+                pathname: "/",
+                type: AdapterOutputType.PRERENDER,
+                parentOutputId: "/page",
+                groupId: 0,
+                route: "/",
+                routeType: "page",
+                response: "complete",
+                compute: "static",
+                config: {},
+                fallback: { filePath: join(distPath, htmlFile), postponedState: undefined, initialRevalidate: false },
+            },
+        ],
+        staticFiles: Object.keys(files)
+            .filter(file => file.startsWith(`${staticDirectory}/`) || file === "account.json" || file === "login.html")
+            .map(file => ({
+                id: file,
+                type: AdapterOutputType.STATIC_FILE as const,
+                pathname: file.startsWith(`${staticDirectory}/`) ? file.replace(staticDirectory, "/_next/static") : `/${file}`,
+                filePath: join(distPath, file),
+                immutableHash: undefined,
+            })),
+    } satisfies Parameters<typeof writeServiceWorker>[0]["outputs"]
+
+    return { projectPath: distPath, outputs, htmlPath: join(distPath, htmlFile) }
 }
 
 afterEach(async () => {
@@ -56,8 +92,8 @@ interface WorkerEvent {
 }
 
 async function createWorker() {
-    const distPath = await createSite()
-    const manifest = await writeServiceWorker({ projectPath: distPath })
+    const site = await createSite()
+    const manifest = await writeServiceWorker(site)
     const handlers = new Map<string, (event: WorkerEvent) => void>()
 
     const cache = {
@@ -75,7 +111,7 @@ async function createWorker() {
     const claim = vi.fn().mockResolvedValue(undefined)
     const skipWaiting = vi.fn()
 
-    runInNewContext(await readFile(join(distPath, "public/sw.js"), "utf8"), {
+    runInNewContext(await readFile(join(site.projectPath, "public/sw.js"), "utf8"), {
         URL,
         Request: class extends Request {
             constructor(url: string, options: RequestInit) {
@@ -91,9 +127,9 @@ async function createWorker() {
 }
 
 describe("PWA release resources", () => {
-    it("includes the complete shell and fonts, excludes private/debug data, and versions changed content", async () => {
-        const distPath = await createSite()
-        const first = await writeServiceWorker({ projectPath: distPath })
+    it.each(["local", "adapter"])("uses %s build metadata, includes the complete shell and fonts, and versions changed content", async layout => {
+        const site = await createSite(layout)
+        const first = await writeServiceWorker(site)
         expect(first.urls).toEqual([
             "/",
             "/_next/static/app.css",
@@ -102,15 +138,25 @@ describe("PWA release resources", () => {
             "/_next/static/export.js",
             "/manifest.webmanifest",
         ])
-        expect(await writeServiceWorker({ projectPath: distPath })).toEqual(first)
-        await writeFile(join(distPath, ".next/server/app/index.html"), "version two")
-        expect((await writeServiceWorker({ projectPath: distPath })).cacheName).not.toBe(first.cacheName)
+        expect(await writeServiceWorker(site)).toEqual(first)
+        await writeFile(site.htmlPath, "version two")
+        const changedHtml = await writeServiceWorker(site)
+        expect(changedHtml.cacheName).not.toBe(first.cacheName)
+        await writeFile(site.outputs.staticFiles[0].filePath, "new app code")
+        expect((await writeServiceWorker(site)).cacheName).not.toBe(changedHtml.cacheName)
     })
 
     it("rejects an incomplete release", async () => {
-        const distPath = await createSite()
-        await rm(join(distPath, "public/manifest.webmanifest"))
-        await expect(writeServiceWorker({ projectPath: distPath })).rejects.toThrow("PWA 缺少首页或安装清单")
+        const site = await createSite()
+        await rm(join(site.projectPath, "public/manifest.webmanifest"))
+        await expect(writeServiceWorker(site)).rejects.toThrow("PWA 缺少完整的静态首页或安装清单")
+    })
+
+    it("rejects a missing or dynamic homepage instead of generating a partial offline release", async () => {
+        const site = await createSite("adapter")
+        const homepage = site.outputs.prerenders[0]
+        for (const prerenders of [[], [{ ...homepage, compute: "blocking" as const }], [{ ...homepage, response: "initial" as const }]])
+            await expect(writeServiceWorker({ ...site, outputs: { ...site.outputs, prerenders } })).rejects.toThrow("PWA 缺少完整的静态首页")
     })
 
     it("waits for all assets and does not force an update over an open document", async () => {
@@ -198,6 +244,73 @@ describe("PWA release resources", () => {
         handlers.get("fetch")!({ request, respondWith })
         await expect(respondWith.mock.calls[1][0]).rejects.toThrow("offline")
         expect(fetch).toHaveBeenCalledTimes(2)
+    })
+})
+
+describe("PWA deployment adapter", () => {
+    type BuildContext = Parameters<NonNullable<NextAdapter["onBuildComplete"]>>[0]
+
+    it.each(["mjs", "cjs"])("loads the platform-supplied %s adapter through NEXT_ADAPTER_PATH", async extension => {
+        const site = await createSite()
+        const platformPath = join(site.projectPath, `platform.${extension}`)
+        const declaration = extension === "mjs" ? "export default" : "module.exports ="
+        await writeFile(platformPath, `${declaration} { name: "Test platform", modifyConfig(config) { return { ...config, platformLoaded: true } } }`)
+        const adapterUrl = new URL("./adapter.mjs", import.meta.url).href
+        const { stdout } = await promisify(execFile)(
+            process.execPath,
+            [
+                "--input-type=module",
+                "-e",
+                `import adapter from ${JSON.stringify(adapterUrl)}; console.log(JSON.stringify({ name: adapter.name, config: await adapter.modifyConfig({}) }))`,
+            ],
+            { env: { ...process.env, NEXT_ADAPTER_PATH: platformPath } },
+        )
+        expect(JSON.parse(stdout)).toEqual({ name: "PWA + Test platform", config: { platformLoaded: true } })
+    })
+
+    it("generates the worker before the platform packages public files and preserves its config hook", async () => {
+        const site = await createSite("adapter")
+        const deployedWorker = join(site.projectPath, "deployed-sw.js")
+
+        const platformAdapter: NextAdapter = {
+            name: "Vercel",
+            modifyConfig: vi.fn(config => config),
+            onBuildComplete: vi.fn(async params => void (await copyFile(join(params.projectDir, "public/sw.js"), deployedWorker))),
+        }
+
+        const adapter = createPwaAdapter({ platformAdapter })
+        const params = { projectDir: site.projectPath, outputs: site.outputs } as BuildContext
+
+        await expect(readFile(deployedWorker)).rejects.toMatchObject({ code: "ENOENT" })
+        await adapter.onBuildComplete!(params)
+
+        const source = await readFile(deployedWorker, "utf8")
+        expect(source).not.toContain("const { cacheName, urls } = __PRECACHE__")
+        expect(source).toContain("/_next/static/chinese.woff2")
+        expect(source).toBe(await readFile(join(site.projectPath, "public/sw.js"), "utf8"))
+        expect(adapter.modifyConfig).toBe(platformAdapter.modifyConfig)
+        expect(platformAdapter.onBuildComplete).toHaveBeenCalledExactlyOnceWith(params)
+    })
+
+    it("generates local releases without a platform adapter", async () => {
+        const site = await createSite("adapter")
+        await createPwaAdapter().onBuildComplete!({ projectDir: site.projectPath, outputs: site.outputs } as BuildContext)
+        expect(await readFile(join(site.projectPath, "public/sw.js"), "utf8")).toContain("zili-chengtu-")
+    })
+
+    it("does not package an incomplete release and propagates platform failures", async () => {
+        const site = await createSite("adapter")
+
+        const platformAdapter: NextAdapter = { name: "Vercel", onBuildComplete: vi.fn().mockRejectedValue(new Error("packaging failed")) }
+
+        const adapter = createPwaAdapter({ platformAdapter })
+        const params = { projectDir: site.projectPath, outputs: site.outputs } as BuildContext
+
+        await expect(adapter.onBuildComplete!(params)).rejects.toThrow("packaging failed")
+        await rm(site.htmlPath)
+        vi.mocked(platformAdapter.onBuildComplete!).mockClear()
+        await expect(adapter.onBuildComplete!(params)).rejects.toMatchObject({ code: "ENOENT" })
+        expect(platformAdapter.onBuildComplete).not.toHaveBeenCalled()
     })
 })
 

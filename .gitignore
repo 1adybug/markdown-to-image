@@ -23,7 +23,6 @@ public/sw.js
 .idea
 
 package-lock.json
-pnpm-lock.yaml
 bun.lockb
 bun.lock
 dist

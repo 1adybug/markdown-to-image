@@ -1,4 +1,6 @@
 node_modules
+# Keep the package manager's generated lockfile format.
+pnpm-lock.yaml
 public
 dist
 build
