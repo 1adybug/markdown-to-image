@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from "react"
+"use client"
+
+import { useEffect, useMemo, useRef, useState } from "react"
 
 import { cn } from "cn"
 import {
@@ -27,10 +29,11 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 import { copyDocument } from "./copy"
 import { DocumentPreview } from "./DocumentPreview"
-import { loadDraft, saveDraft } from "./draft"
+import { type SaveDraftResult, saveDraft } from "./draft"
 import { exportDocument } from "./export"
 import { type MarkdownEncoding, countGraphemes, readMarkdownFile } from "./import-markdown"
 import { type MarkdownDraft, defaultSettings, exampleMarkdown, exportFormats } from "./model"
+import { useInitialDraft } from "./use-initial-draft"
 import { ThemePicker, WorkspaceSettings } from "./WorkspaceSettings"
 
 import "./workspace.css"
@@ -53,11 +56,17 @@ interface ImageOutputError {
 }
 
 export function MarkdownWorkspace() {
-    const [initial] = useState(loadDraft)
-    const [draft, setDraft] = useState<MarkdownDraft>(() => initial.draft ?? { source: exampleMarkdown, settings: { ...defaultSettings } })
-    const [hasEdited, setHasEdited] = useState(false)
-    const [saveError, setSaveError] = useState(initial.error)
-    const [saveStatus, setSaveStatus] = useState(initial.draft ? "已恢复本地草稿" : "内容仅保存在此浏览器")
+    const initial = useInitialDraft()
+    const [editedDraft, setDraft] = useState<MarkdownDraft | null>(null)
+    const draft = useMemo<MarkdownDraft>(
+        () => editedDraft ?? initial?.draft ?? { source: initial ? exampleMarkdown : "", settings: { ...defaultSettings } },
+        [editedDraft, initial],
+    )
+    const hasEdited = editedDraft !== null
+    const [saveResult, setSaveResult] = useState<SaveDraftResult | null>(null)
+    const saveError = saveResult ? saveResult.error : (initial?.error ?? null)
+    const [savedStatus, setSaveStatus] = useState<string | null>(null)
+    const saveStatus = savedStatus ?? (initial === null ? "正在恢复本地草稿…" : initial.draft ? "已恢复本地草稿" : "内容仅保存在此浏览器")
     const [previousSource, setPreviousSource] = useState<string | null>(null)
     const [isComposing, setIsComposing] = useState(false)
     const [imageAction, setImageAction] = useState<ImageAction | null>(null)
@@ -71,15 +80,15 @@ export function MarkdownWorkspace() {
     const documentRef = useRef<HTMLDivElement>(null)
     const outputLock = useRef(false)
     const { resolvedTheme, setTheme } = useTheme()
+    const isDark = initial !== null && resolvedTheme === "dark"
     const isOutputting = imageAction !== null
     const isCopying = imageAction === ImageAction.复制
     const isDownloading = imageAction === ImageAction.导出
-    const busy = isOutputting || isImporting
+    const busy = initial === null || isOutputting || isImporting
     const exportFormatLabel = exportFormats[draft.settings.exportFormat].label
 
     function updateDraft(value: MarkdownDraft) {
         setDraft(value)
-        setHasEdited(true)
         setSaveStatus("正在保存本地草稿…")
     }
 
@@ -93,7 +102,7 @@ export function MarkdownWorkspace() {
 
         const timeout = setTimeout(() => {
             const { error } = saveDraft({ draft })
-            setSaveError(error)
+            setSaveResult({ error })
             setSaveStatus(error ? "草稿尚未保存" : "已保存到此浏览器")
         }, 400)
 
@@ -190,11 +199,11 @@ export function MarkdownWorkspace() {
                     <Button
                         variant="ghost"
                         size="icon"
-                        disabled={isOutputting}
-                        aria-label={resolvedTheme === "dark" ? "切换浅色界面" : "切换深色界面"}
-                        onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+                        disabled={initial === null || isOutputting}
+                        aria-label={isDark ? "切换浅色界面" : "切换深色界面"}
+                        onClick={() => setTheme(isDark ? "light" : "dark")}
                     >
-                        {resolvedTheme === "dark" ? <SunIcon /> : <MoonIcon />}
+                        {isDark ? <SunIcon /> : <MoonIcon />}
                     </Button>
                     <Button
                         className="export-button"
@@ -233,7 +242,7 @@ export function MarkdownWorkspace() {
                                 variant="link"
                                 onClick={() => {
                                     const { error } = saveDraft({ draft })
-                                    setSaveError(error)
+                                    setSaveResult({ error })
 
                                     if (!error) setSaveStatus("已保存到此浏览器")
                                 }}

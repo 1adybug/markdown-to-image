@@ -1,5 +1,5 @@
-import { WorkspaceClient } from "@/features/markdown-to-image/WorkspaceClient"
+import { MarkdownWorkspace } from "@/features/markdown-to-image/MarkdownWorkspace"
 
 export default function Page() {
-    return <WorkspaceClient />
+    return <MarkdownWorkspace />
 }

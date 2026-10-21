@@ -1,21 +1,28 @@
+import { renderToString } from "react-dom/server"
+
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { toast } from "react-hot-toast"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { loadDraft, saveDraft } from "./draft"
+import Page from "@/app/page"
+
+import { DRAFT_STORAGE_KEY, loadDraft, saveDraft } from "./draft"
 import { exportDocument } from "./export"
 import { MarkdownWorkspace } from "./MarkdownWorkspace"
-import { defaultSettings, ExportFormat, exportFormats, MarkdownTheme } from "./model"
+import { defaultSettings, exampleMarkdown, ExportFormat, exportFormats, MarkdownTheme } from "./model"
+
+const themeMock = vi.hoisted(() => ({ resolvedTheme: "light", setTheme: vi.fn() }))
 
 vi.mock("./export", () => ({ exportDocument: vi.fn() }))
 vi.mock("react-hot-toast", () => ({ toast: { success: vi.fn() } }))
-vi.mock("next-themes", () => ({ useTheme: () => ({ resolvedTheme: "light", setTheme: vi.fn() }) }))
+vi.mock("next-themes", () => ({ useTheme: () => themeMock }))
 
 const savedSource = "# 我的草稿\n\n保留这段中文。"
 const exportMock = vi.mocked(exportDocument)
 
 beforeEach(() => {
+    themeMock.resolvedTheme = "light"
     localStorage.clear()
     saveDraft({ draft: { source: savedSource, settings: { ...defaultSettings } } })
     exportMock.mockReset().mockResolvedValue(new Blob(["PNG"], { type: "image/png" }))
@@ -59,6 +66,93 @@ afterEach(() => {
 })
 
 describe("Markdown workspace interactions", () => {
+    it("hydrates the server workspace with a saved draft and dark theme without overwriting storage", async () => {
+        const draft = {
+            source: `${savedSource}\n\n![示意](https://images.example/photo.png)`,
+            settings: { ...defaultSettings, width: 1000, theme: MarkdownTheme.简约, pixelRatio: 4 as const, exportFormat: ExportFormat.JPG },
+        }
+
+        saveDraft({ draft })
+        const stored = localStorage.getItem(DRAFT_STORAGE_KEY)
+        const getItem = vi.spyOn(Storage.prototype, "getItem")
+        const setItem = vi.spyOn(Storage.prototype, "setItem")
+        const onRecoverableError = vi.fn()
+        themeMock.resolvedTheme = "dark"
+        const container = document.createElement("div")
+        container.innerHTML = renderToString(<Page />)
+        document.body.append(container)
+
+        expect(getItem).not.toHaveBeenCalled()
+        expect(container.querySelector("textarea")).toBeDisabled()
+        expect(container.querySelector("textarea")).toHaveValue("")
+        expect(container.textContent).not.toContain(savedSource)
+        expect(container.textContent).not.toContain(exampleMarkdown)
+
+        render(<Page />, { container, hydrate: true, onRecoverableError })
+
+        const editor = screen.getByRole("textbox", { name: "Markdown 正文" })
+        expect(editor).toBeEnabled()
+        expect(editor).toHaveValue(draft.source)
+        expect(screen.getByRole("radio", { name: /简约/ })).toHaveAttribute("aria-checked", "true")
+        expect(screen.getByRole("button", { name: "4×" })).toHaveAttribute("aria-pressed", "true")
+        expect(screen.getByRole("button", { name: "JPG" })).toHaveAttribute("aria-pressed", "true")
+        expect(screen.getByRole("button", { name: "切换浅色界面" })).toBeEnabled()
+        expect(screen.getByAltText("示意")).toHaveAttribute("src", "/api/image?url=https%3A%2F%2Fimages.example%2Fphoto.png")
+        expect(screen.getByRole("status")).toHaveTextContent("已恢复本地草稿")
+        expect(setItem).not.toHaveBeenCalled()
+        expect(localStorage.getItem(DRAFT_STORAGE_KEY)).toBe(stored)
+        expect(onRecoverableError).not.toHaveBeenCalled()
+
+        fireEvent.change(editor, { target: { value: "# 恢复后的新编辑" } })
+        await waitFor(() => expect(loadDraft().draft).toEqual({ ...draft, source: "# 恢复后的新编辑" }))
+        expect(editor).toHaveValue("# 恢复后的新编辑")
+    })
+
+    it("selects the example only after hydration confirms there is no saved draft", () => {
+        localStorage.clear()
+        const setItem = vi.spyOn(Storage.prototype, "setItem")
+        const onRecoverableError = vi.fn()
+        const container = document.createElement("div")
+        container.innerHTML = renderToString(<Page />)
+        document.body.append(container)
+
+        expect(container.querySelector("textarea")).toHaveValue("")
+        render(<Page />, { container, hydrate: true, onRecoverableError })
+
+        expect(screen.getByRole("textbox", { name: "Markdown 正文" })).toHaveValue(exampleMarkdown)
+        expect(screen.getByRole("button", { name: "导出 PNG" })).toBeEnabled()
+        expect(screen.getByRole("status")).toHaveTextContent("内容仅保存在此浏览器")
+        expect(setItem).not.toHaveBeenCalled()
+        expect(onRecoverableError).not.toHaveBeenCalled()
+    })
+
+    it("reports denied draft storage after hydration while preserving editing and retry", async () => {
+        const getItem = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+            throw new DOMException("Storage denied", "SecurityError")
+        })
+
+        const setItem = vi.spyOn(Storage.prototype, "setItem")
+        const onRecoverableError = vi.fn()
+        const container = document.createElement("div")
+        container.innerHTML = renderToString(<Page />)
+        document.body.append(container)
+
+        expect(getItem).not.toHaveBeenCalled()
+        render(<Page />, { container, hydrate: true, onRecoverableError })
+
+        expect(screen.getByText(/无法读取本地草稿/)).toBeInTheDocument()
+        expect(screen.getByRole("textbox", { name: "Markdown 正文" })).toHaveValue(exampleMarkdown)
+        expect(screen.getByRole("textbox", { name: "Markdown 正文" })).toBeEnabled()
+        expect(setItem).not.toHaveBeenCalled()
+        expect(onRecoverableError).not.toHaveBeenCalled()
+
+        getItem.mockRestore()
+        const user = userEvent.setup()
+        await user.click(screen.getByRole("button", { name: "重试保存" }))
+        expect(screen.queryByText(/无法读取本地草稿/)).not.toBeInTheDocument()
+        expect(loadDraft().draft?.source).toBe(exampleMarkdown)
+    })
+
     it("lists AI first and defaults to the AI theme at 2x when there is no saved draft", async () => {
         localStorage.clear()
         const user = userEvent.setup()
