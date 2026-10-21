@@ -99,6 +99,7 @@ async function createWorker() {
     const cache = {
         addAll: vi.fn().mockResolvedValue(undefined),
         match: vi.fn<(key: string) => Promise<Response | undefined>>().mockResolvedValue(new Response("cached")),
+        put: vi.fn<(key: string, response: Response) => Promise<void>>().mockResolvedValue(undefined),
     }
 
     const caches = {
@@ -192,6 +193,80 @@ describe("PWA release resources", () => {
         handlers.get("fetch")!({ request: { method: "GET", url: "https://example.test/_next/static/chinese.woff2" }, respondWith })
         expect(await (await respondWith.mock.calls[1][0]).text()).toBe("font")
         expect(fetch).not.toHaveBeenCalled()
+    })
+
+    it("uses the current installation name online while an older shell remains active", async () => {
+        const { handlers, cache, fetch } = await createWorker()
+        cache.match.mockResolvedValue(new Response(JSON.stringify({ name: "字里成图 · Markdown 转图片" })))
+
+        const currentManifest = { name: "字里成图", short_name: "字里成图" }
+
+        fetch.mockResolvedValueOnce(new Response(JSON.stringify(currentManifest)))
+
+        const request = { method: "GET", url: "https://example.test/manifest.webmanifest" }
+
+        const respondWith = vi.fn()
+
+        handlers.get("fetch")!({ request, respondWith })
+        expect(await (await respondWith.mock.calls[0][0]).json()).toEqual(currentManifest)
+        expect(fetch).toHaveBeenCalledExactlyOnceWith(request, { cache: "no-cache" })
+        expect(cache.match).not.toHaveBeenCalled()
+        expect(cache.put).toHaveBeenCalledOnce()
+        const [key, response] = cache.put.mock.calls[0]
+        expect(key).toBe("/manifest.webmanifest")
+        expect(await response.json()).toEqual(currentManifest)
+    })
+
+    it("falls back to the cached installation manifest only when the network fails", async () => {
+        const { handlers, cache, fetch } = await createWorker()
+
+        const savedManifest = { name: "字里成图", short_name: "字里成图" }
+
+        cache.match.mockResolvedValueOnce(new Response(JSON.stringify(savedManifest)))
+        fetch.mockRejectedValueOnce(new Error("offline"))
+        const respondWith = vi.fn()
+
+        handlers.get("fetch")!({ request: { method: "GET", url: "https://example.test/manifest.webmanifest" }, respondWith })
+        expect(await (await respondWith.mock.calls[0][0]).json()).toEqual(savedManifest)
+        expect(fetch).toHaveBeenCalledOnce()
+        expect(cache.match).toHaveBeenCalledWith("/manifest.webmanifest")
+        expect(cache.put).not.toHaveBeenCalled()
+    })
+
+    it.each(["open", "put"])("keeps the current installation manifest available when cache %s fails", async failure => {
+        const { handlers, cache, caches, fetch } = await createWorker()
+
+        if (failure === "open") caches.open.mockRejectedValueOnce(new Error("storage denied"))
+        else cache.put.mockRejectedValueOnce(new Error("quota exceeded"))
+
+        const currentManifest = { name: "字里成图" }
+
+        fetch.mockResolvedValueOnce(new Response(JSON.stringify(currentManifest)))
+        const respondWith = vi.fn()
+
+        handlers.get("fetch")!({ request: { method: "GET", url: "https://example.test/manifest.webmanifest" }, respondWith })
+        expect(await (await respondWith.mock.calls[0][0]).json()).toEqual(currentManifest)
+        expect(cache.match).not.toHaveBeenCalled()
+    })
+
+    it("preserves manifest HTTP errors and rejects offline requests without a cached manifest", async () => {
+        const { handlers, cache, fetch } = await createWorker()
+
+        const request = { method: "GET", url: "https://example.test/manifest.webmanifest" }
+
+        const respondWith = vi.fn()
+
+        fetch.mockResolvedValueOnce(new Response("server error", { status: 500 }))
+        handlers.get("fetch")!({ request, respondWith })
+        expect((await respondWith.mock.calls[0][0]).status).toBe(500)
+        expect(cache.put).not.toHaveBeenCalled()
+        expect(cache.match).not.toHaveBeenCalled()
+
+        fetch.mockRejectedValueOnce(new Error("offline"))
+        cache.match.mockResolvedValueOnce(undefined)
+        handlers.get("fetch")!({ request, respondWith })
+        await expect(respondWith.mock.calls[1][0]).rejects.toThrow("offline")
+        expect(fetch).toHaveBeenCalledTimes(2)
     })
 
     it("passes protected pages, APIs, remote images and mutations through to the network", async () => {

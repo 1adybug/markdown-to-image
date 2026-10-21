@@ -13,6 +13,29 @@ async function readCachedResponse(key) {
     }
 }
 
+async function readManifest(request) {
+    let response
+
+    try {
+        response = await fetch(request, { cache: "no-cache" })
+    } catch (error) {
+        const cached = await readCachedResponse("/manifest.webmanifest")
+        if (cached) return cached
+        throw error
+    }
+
+    if (response.ok) {
+        try {
+            const cache = await caches.open(cacheName)
+            await cache.put("/manifest.webmanifest", response.clone())
+        } catch {
+            // Storage failure must not discard a valid network manifest.
+        }
+    }
+
+    return response
+}
+
 self.addEventListener("install", event => {
     // A new version is installable only after its complete shell and fonts are cached.
     // Do not skipWaiting: an update must not interrupt an open document or export.
@@ -36,6 +59,12 @@ self.addEventListener("fetch", event => {
     const url = new URL(request.url)
     if (url.origin !== self.location.origin) return
     if (url.pathname.startsWith("/api/") || url.searchParams.has("_rsc") || request.headers?.get("RSC") === "1") return
+
+    // Installation metadata can update independently of the versioned app shell.
+    if (url.pathname === "/manifest.webmanifest") {
+        event.respondWith(readManifest(request))
+        return
+    }
 
     // Only the public workspace has an offline document. Never cache account/API
     // responses, protected navigations, or images referenced by a user's Markdown.
