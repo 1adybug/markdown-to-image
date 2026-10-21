@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs"
+
 import { defineConfig } from "@rsbuild/core"
 import { pluginReact } from "@rsbuild/plugin-react"
 import { pluginSvgr } from "@rsbuild/plugin-svgr"
@@ -5,6 +7,15 @@ import { pluginTailwindcss } from "@rsbuild/plugin-tailwindcss"
 import { sdrrRsbuildPlugin } from "sdrr/rsbuild"
 
 import { pluginPwa } from "./features/pwa/build"
+
+// The manifest owns installation metadata; HTML uses the same values.
+interface PwaHtmlMetadata {
+    description: string
+    short_name: string
+    theme_color: string
+}
+
+const manifest: PwaHtmlMetadata = JSON.parse(readFileSync(new URL("./public/manifest.webmanifest", import.meta.url), "utf8"))
 
 function getDevelopmentPort() {
     const value = process.env.PORT?.trim()
@@ -26,12 +37,13 @@ export default defineConfig({
     html: {
         title: "Markdown 转图片 · 字里成图",
         meta: {
-            description: "中文友好的 Markdown 转图片工具，实时预览、九种主题与高清 PNG 导出。内容在浏览器本地处理。",
-            "application-name": "字里成图",
-            "theme-color": "#6D28D9",
+            description: manifest.description,
+            viewport: "width=device-width, initial-scale=1.0, viewport-fit=cover",
+            "application-name": manifest.short_name,
+            "theme-color": manifest.theme_color,
             "mobile-web-app-capable": "yes",
             "apple-mobile-web-app-capable": "yes",
-            "apple-mobile-web-app-title": "字里成图",
+            "apple-mobile-web-app-title": manifest.short_name,
             "apple-mobile-web-app-status-bar-style": "default",
         },
         tags: [

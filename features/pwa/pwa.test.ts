@@ -56,7 +56,10 @@ async function createWorker() {
     const manifest = await writeServiceWorker({ distPath })
     const handlers = new Map<string, (event: WorkerEvent) => void>()
 
-    const cache = { addAll: vi.fn().mockResolvedValue(undefined), match: vi.fn().mockResolvedValue(new Response("cached")) }
+    const cache = {
+        addAll: vi.fn().mockResolvedValue(undefined),
+        match: vi.fn<(key: string) => Promise<Response | undefined>>().mockResolvedValue(new Response("cached")),
+    }
 
     const caches = {
         open: vi.fn().mockResolvedValue(cache),
@@ -151,21 +154,59 @@ describe("PWA release resources", () => {
         expect(respondWith).not.toHaveBeenCalled()
         expect(caches.open).not.toHaveBeenCalled()
     })
+
+    it.each(["missing", "open", "match"])("uses the network when cache storage is %s", async failure => {
+        const { handlers, cache, caches, fetch } = await createWorker()
+
+        if (failure === "missing") cache.match.mockResolvedValueOnce(undefined)
+        else if (failure === "open") caches.open.mockRejectedValueOnce(new Error("storage denied"))
+        else cache.match.mockRejectedValueOnce(new Error("cache unavailable"))
+
+        const request = { method: "GET", url: "https://example.test/", mode: "navigate" }
+
+        const respondWith = vi.fn()
+        handlers.get("fetch")!({ request, respondWith })
+        expect(await (await respondWith.mock.calls[0][0]).text()).toBe("network")
+        expect(fetch).toHaveBeenCalledExactlyOnceWith(request)
+    })
+
+    it("preserves HTTP errors and does not retry a failed network request", async () => {
+        const { handlers, cache, fetch } = await createWorker()
+        cache.match.mockResolvedValue(undefined)
+
+        const request = { method: "GET", url: "https://example.test/", mode: "navigate" }
+
+        const respondWith = vi.fn()
+        fetch.mockResolvedValueOnce(new Response("server error", { status: 500 }))
+        handlers.get("fetch")!({ request, respondWith })
+        expect((await respondWith.mock.calls[0][0]).status).toBe(500)
+        fetch.mockRejectedValueOnce(new Error("offline"))
+        handlers.get("fetch")!({ request, respondWith })
+        await expect(respondWith.mock.calls[1][0]).rejects.toThrow("offline")
+        expect(fetch).toHaveBeenCalledTimes(2)
+    })
 })
 
 describe("installation icons", () => {
     const root = new URL("../../", import.meta.url)
 
-    it("uses an installable manifest with SVG and real PNG fallbacks", async () => {
+    interface InstallationIcon {
+        purpose: string
+        type: string
+    }
+
+    it("uses separate desktop PNG and maskable installation artwork", async () => {
         const manifest = JSON.parse(await readFile(new URL("public/manifest.webmanifest", root), "utf8"))
         expect(manifest).toMatchObject({ id: "/", start_url: "/", scope: "/", display: "standalone", short_name: "字里成图" })
         expect(manifest.icons).toEqual(
             expect.arrayContaining([
-                expect.objectContaining({ type: "image/svg+xml", sizes: "any", purpose: "any" }),
                 expect.objectContaining({ type: "image/svg+xml", sizes: "any", purpose: "maskable" }),
                 expect.objectContaining({ type: "image/png", sizes: "192x192" }),
                 expect.objectContaining({ type: "image/png", sizes: "512x512" }),
             ]),
+        )
+        expect(manifest.icons.filter((icon: InstallationIcon) => icon.purpose === "any").every((icon: InstallationIcon) => icon.type === "image/png")).toBe(
+            true,
         )
 
         for (const icon of manifest.icons) {

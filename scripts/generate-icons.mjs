@@ -5,8 +5,11 @@ import process from "node:process"
 
 import { Resvg } from "@resvg/resvg-js"
 
+import { IOS_ICON_PATH } from "./lib/ios-mask.mjs"
+
 const root = new URL("../", import.meta.url)
 const source = await readFile(new URL("assets/logo.svg", root), "utf8")
+const background = "#6D28D9"
 const logo = new Resvg(source, { font: { loadSystemFonts: false } })
 assert.equal(logo.width, logo.height, "Logo 必须使用正方形画布。")
 const size = logo.width
@@ -17,13 +20,20 @@ function withBackground(scale = 1) {
     const offset = (size * (1 - scale)) / 2
     const artwork = source.replace(/<\?xml[^?]*\?>\s*/, "")
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-    <rect width="${size}" height="${size}" fill="#6D28D9" />
+    <rect width="${size}" height="${size}" fill="${background}" />
     <g transform="translate(${offset} ${offset}) scale(${scale})">${artwork}</g>
 </svg>
 `
 }
 
 const fullBleed = withBackground()
+
+// Fill the master's transparent corners before applying the installation outline.
+// The product/favicons keep their original artwork and shape.
+const desktop = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <defs><clipPath id="desktop-installation-clip"><path transform="scale(${size})" d="${IOS_ICON_PATH}" /></clipPath></defs>
+    <g clip-path="url(#desktop-installation-clip)">${fullBleed}</g>
+</svg>`
 
 // This artwork needs additional space to fit Android's circular safe area.
 const maskable = withBackground(0.62)
@@ -57,8 +67,8 @@ function ico(sizes) {
 const outputs = new Map([
     ["icons/logo.svg", source],
     ["icons/maskable.svg", maskable],
-    ["icons/icon-192.png", png(source, 192)],
-    ["icons/icon-512.png", png(source, 512)],
+    ["icons/icon-192.png", png(desktop, 192)],
+    ["icons/icon-512.png", png(desktop, 512)],
     ["icons/maskable-512.png", png(maskable, 512)],
     ["apple-touch-icon.png", png(fullBleed, 180)],
     ["favicon.ico", ico([16, 32, 48])],

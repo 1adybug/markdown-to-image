@@ -3,6 +3,16 @@
 const { cacheName, urls } = __PRECACHE__
 const precacheUrls = new Set(urls.map(url => new URL(url, self.location.origin).href))
 
+async function readCachedResponse(key) {
+    try {
+        const cache = await caches.open(cacheName)
+        return await cache.match(key)
+    } catch {
+        // Cache Storage can be denied or evicted independently of connectivity.
+        return undefined
+    }
+}
+
 self.addEventListener("install", event => {
     // A new version is installable only after its complete shell and fonts are cached.
     // Do not skipWaiting: an update must not interrupt an open document or export.
@@ -33,5 +43,5 @@ self.addEventListener("fetch", event => {
     if (!isWorkspace && (request.mode === "navigate" || !precacheUrls.has(request.url))) return
 
     // Keep HTML and hashed assets on the same release until the waiting worker activates.
-    event.respondWith(caches.open(cacheName).then(async cache => (await cache.match(cacheKey)) ?? fetch(request)))
+    event.respondWith(readCachedResponse(cacheKey).then(response => response ?? fetch(request)))
 })

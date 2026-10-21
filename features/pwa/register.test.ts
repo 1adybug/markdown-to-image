@@ -55,4 +55,19 @@ describe("service worker registration", () => {
         registerServiceWorker()
         await vi.waitFor(() => expect(log).toHaveBeenCalledWith("离线资源准备失败，联网功能仍可使用。", error))
     })
+
+    it("also catches a synchronous security failure while accessing service workers", () => {
+        setup()
+        const error = new DOMException("storage denied", "SecurityError")
+
+        vi.stubGlobal("navigator", {
+            get serviceWorker() {
+                throw error
+            },
+        })
+
+        const log = vi.spyOn(console, "error").mockImplementation(() => {})
+        expect(registerServiceWorker).not.toThrow()
+        expect(log).toHaveBeenCalledWith("离线资源准备失败，联网功能仍可使用。", error)
+    })
 })

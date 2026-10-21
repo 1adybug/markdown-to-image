@@ -6,10 +6,10 @@ import { Toaster as HotToaster, toast, ToastBar } from "react-hot-toast"
 export const Toaster: FC = () => (
     <HotToaster
         containerStyle={{
-            top: 12,
-            right: 12,
-            bottom: 12,
-            left: 12,
+            top: "calc(12px + env(safe-area-inset-top, 0px))",
+            right: "calc(12px + env(safe-area-inset-right, 0px))",
+            bottom: "calc(12px + env(safe-area-inset-bottom, 0px))",
+            left: "calc(12px + env(safe-area-inset-left, 0px))",
         }}
         gutter={6}
         position="top-center"
