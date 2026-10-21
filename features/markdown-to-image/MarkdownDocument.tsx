@@ -3,6 +3,7 @@ import { type ComponentProps, type Ref, createContext, Fragment, memo, useContex
 import { cn } from "cn"
 import ReactMarkdown, { type Components, type Options } from "react-markdown"
 
+import { getImageUrl } from "./image-url"
 import { documentUrlTransform, getRehypePlugins, getRemarkPlugins } from "./markdown-pipeline"
 import type { MarkdownDraft } from "./model"
 
@@ -41,6 +42,8 @@ function ImageResource({ src, alt, title, width, height }: ComponentProps<"img">
     return (
         <Fragment>
             {src && (
+                // Original pixels and dimensions are required for document export.
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                     key={load.attempt}
                     src={src}
@@ -59,7 +62,7 @@ function ImageResource({ src, alt, title, width, height }: ComponentProps<"img">
             )}
             {unavailable && (
                 <span className="markdown-image-error" data-image-error="true" role="status">
-                    {load.retrying ? "正在重新加载图片…" : `图片无法加载${alt ? `：${alt}` : ""}。请检查图片地址和跨域访问权限。`}
+                    {load.retrying ? "正在重新加载图片…" : `图片无法加载${alt ? `：${alt}` : ""}。请检查图片地址、网络或原站访问限制。`}
                     {src && (
                         <button
                             className="markdown-image-retry"
@@ -78,7 +81,8 @@ function ImageResource({ src, alt, title, width, height }: ComponentProps<"img">
 
 function DocumentImage(props: ComponentProps<"img">) {
     // A changed URL owns a new load attempt; failure from the previous image must not persist.
-    return <ImageResource key={props.src} {...props} />
+    const src = typeof props.src === "string" ? getImageUrl(props.src, document.baseURI) : undefined
+    return <ImageResource key={src} {...props} src={src} />
 }
 
 function TaskCheckbox({ checked }: ComponentProps<"input">) {

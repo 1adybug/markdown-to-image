@@ -292,17 +292,18 @@ describe("文稿导出", () => {
         await expect(exportDocument({ element, pixelRatio: 2 })).rejects.toThrow("无法解码")
     })
 
-    it("图片显示正常但不允许 CORS 读取时明确失败", async () => {
+    it("同源图片代理读取失败时明确失败", async () => {
         const element = createDocument()
         addImage({ element })
         vi.mocked(fetch).mockRejectedValue(new TypeError("Failed to fetch"))
-        await expect(exportDocument({ element, pixelRatio: 2 })).rejects.toThrow("跨域读取（CORS）")
+        await expect(exportDocument({ element, pixelRatio: 2 })).rejects.toThrow("原站访问限制")
         expect(screenshot.domToBlob).not.toHaveBeenCalled()
     })
 
     it("导出器重复读取图片时复用预检结果", async () => {
         const element = createDocument()
         const image = addImage({ element })
+        image.src = "/api/image?url=https%3A%2F%2Fimages.example.test%2Fphoto.png"
 
         screenshot.domToBlob.mockImplementation(async (context: Options) => {
             await context.fetchFn!(image.src)
@@ -311,6 +312,7 @@ describe("文稿导出", () => {
 
         await exportDocument({ element, pixelRatio: 2 })
         expect(fetch).toHaveBeenCalledOnce()
+        expect(fetch).toHaveBeenCalledWith(image.src, expect.objectContaining({ credentials: "same-origin" }))
     })
 
     it("截图依赖吞掉异步资源错误时在生成图片前重新阻断，并释放上下文", async () => {
@@ -322,7 +324,7 @@ describe("文稿导出", () => {
             return pngBlob()
         })
 
-        await expect(exportDocument({ element: createDocument(), pixelRatio: 2 })).rejects.toThrow("跨域读取（CORS）")
+        await expect(exportDocument({ element: createDocument(), pixelRatio: 2 })).rejects.toThrow("原站访问限制")
         expect(screenshot.destroyContext).toHaveBeenCalledOnce()
     })
 

@@ -45,7 +45,7 @@ components:
 
 产品标志使用用户提供的 SVG：紫色圆角底板上，左倾的 Markdown 文档通过黄色弯箭头转换为右倾的彩色风景图片，左下角带珊瑚色四角星。保留原图的比例、配色、渐变和阴影，不重新绘制；纸样主题条是工作台的另一识别点。编辑器、设置和反馈沿用项目 shadcn / Base UI；避免营销大屏、装饰性渐变背景和占据工作空间的卡片堆叠。除原始 Logo 内的细节外，渐变仅用于用户选择的图片主题。
 
-`assets/logo.svg` 是产品 Logo 唯一源文件，使用 1024 × 1024 画布，主色为 `#6D28D9`，搭配原图的蓝色、黄色、薄荷绿和珊瑚色；品牌固定配色独立于浅深色控件 token。首页和登录页共用 SVG，浏览器 favicon 保留原始 SVG。`pnpm icons:generate` 从同一源文件生成 `public` 下的 SVG 副本、PNG 和 ICO；桌面安装的 192 / 512px PNG 先补齐紫底，再应用 `scripts/lib/ios-mask.mjs` 的 iOS 连续曲线，外部四角透明，Manifest 不再把原始 SVG 作为 `any` 图标。Apple 版本仅在原图后补齐紫色背景；maskable 版本等比缩放至 62% 并居中放置于满版背景上，让核心图形位于中心半径 40% 的安全圆内，再由系统裁切。界面 Logo 和 favicon 的轮廓保持原样。
+`assets/logo.svg` 是产品 Logo 唯一源文件，使用 1024 × 1024 画布，主色为 `#6D28D9`，搭配原图的蓝色、黄色、薄荷绿和珊瑚色；品牌固定配色独立于浅深色控件 token。首页使用生成的 `/icons/logo.svg`，浏览器 favicon 保留原始 SVG。`pnpm icons:generate` 从同一源文件生成 `public` 下的 SVG 副本、PNG 和 ICO；桌面安装的 192 / 512px PNG 先补齐紫底，再应用 `scripts/lib/ios-mask.mjs` 的 iOS 连续曲线，外部四角透明，Manifest 不再把原始 SVG 作为 `any` 图标。Apple 版本仅在原图后补齐紫色背景；maskable 版本等比缩放至 62% 并居中放置于满版背景上，让核心图形位于中心半径 40% 的安全圆内，再由系统裁切。界面 Logo 和 favicon 的轮廓保持原样。
 
 运行时样式是唯一 token 来源，本文件记录已实现的约定，不生成 CSS。`index.css` 的 `:root` / `.dark` → Tailwind `@theme inline` → `components/ui` 是应用控件的映射路径。`features/markdown-to-image/document.css` 的 `--doc-*` → `MarkdownDocument` 与主题缩略图是文稿颜色的映射路径。缩略图不维护第二套配色。`workspace.css` 只负责工作台布局和产品元素。
 
@@ -103,11 +103,11 @@ PWA 沿用同一工作台与文稿状态，不新增独立布局或持久化来�
 
 导出按钮是主要动作，固定最小宽度容纳忙碌标签和转圈图标；辅助动作使用 ghost / outline。不可用控件显式 disabled，保留焦点轮廓。图片主题使用 radio 键盘交互；缩放和视图使用 ToggleGroup。
 
-导入失败保留正文，在错误附近选择 UTF-8 或 GB18030 并重试。文件始终在浏览器读取，不上传；远程图片仍由浏览器请求。用户可见文案说明操作结果和下一步，不暴露内部解析器名称。
+导入失败保留正文，在错误附近选择 UTF-8 或 GB18030 并重试。文件始终在浏览器读取，不上传；远程 HTTP / HTTPS 图片通过同源服务端代理获取，原文保留原始地址；预览和导出共用该地址。服务端不接收 Markdown 正文，图片获取失败仍阻止缺图导出。用户可见文案说明操作结果和下一步，不暴露内部解析器名称。
 
 图标统一使用 Lucide。关键动作保留文字，纯图标按钮提供可访问名称。动画仅用于操作状态和轻微 hover，尊重 `prefers-reduced-motion`；该规则中的局部 `!important` 用于覆盖共享控件动画时长。数字和字符计数使用中文 locale，字符计数按 Unicode 字素。
 
-本工具只有一个主要工作流，行为约定保存在这里，不额外维护重复的 UX-CONTRACT。原有登录和后台路由继续沿用既有组件和鉴权。
+本工具只有一个主要工作流，行为约定保存在这里，不额外维护重复的 UX-CONTRACT。Next.js 管理公开首页和图片代理；工作台在客户端边界内加载，草稿格式和本地保存行为保持兼容。登录与后台模板路由已移除。
 
 ## Do's and Don'ts
 

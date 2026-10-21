@@ -6,6 +6,12 @@
 # Dist
 node_modules
 dist/
+.next/
+.vercel/
+.verification/
+next-env.d.ts
+*.tsbuildinfo
+public/sw.js
 
 # Profile
 .rspack-profile-*/
@@ -30,8 +36,6 @@ test.js
 test.mjs
 test.ts
 test
-
-components/Router.tsx
 
 .env
 .env.*

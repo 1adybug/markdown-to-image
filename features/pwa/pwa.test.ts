@@ -7,23 +7,26 @@ import { runInNewContext } from "node:vm"
 import { Resvg } from "@resvg/resvg-js"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { writeServiceWorker } from "./build"
+import { writeServiceWorker } from "./build.mjs"
 
 const temporaryDirectories: string[] = []
 
 async function createSite() {
     const distPath = await mkdtemp(join(tmpdir(), "zili-pwa-test-"))
     temporaryDirectories.push(distPath)
-    await mkdir(join(distPath, "static"))
+    await mkdir(join(distPath, ".next/static"), { recursive: true })
+    await mkdir(join(distPath, ".next/server/app"), { recursive: true })
+    await mkdir(join(distPath, "public"))
 
     for (const [file, body] of Object.entries({
-        "index.html": "<html>version one</html>",
-        "manifest.webmanifest": "{}",
-        "static/app.js": "app code",
-        "static/export.js": "lazy export code",
-        "static/app.css": "font rules",
-        "static/chinese.woff2": "Chinese font",
-        "static/app.js.map": "debug map",
+        ".next/server/app/index.html": "<html>version one</html>",
+        ".next/server/app/index.rsc": "RSC response",
+        "public/manifest.webmanifest": "{}",
+        ".next/static/app.js": "app code",
+        ".next/static/export.js": "lazy export code",
+        ".next/static/app.css": "font rules",
+        ".next/static/chinese.woff2": "Chinese font",
+        ".next/static/app.js.map": "debug map",
         "account.json": "private response",
         "login.html": "login page",
     }))
@@ -43,6 +46,7 @@ interface WorkerRequest {
     method: string
     url: string
     mode?: string
+    headers?: Headers
 }
 
 interface WorkerEvent {
@@ -53,7 +57,7 @@ interface WorkerEvent {
 
 async function createWorker() {
     const distPath = await createSite()
-    const manifest = await writeServiceWorker({ distPath })
+    const manifest = await writeServiceWorker({ projectPath: distPath })
     const handlers = new Map<string, (event: WorkerEvent) => void>()
 
     const cache = {
@@ -71,7 +75,7 @@ async function createWorker() {
     const claim = vi.fn().mockResolvedValue(undefined)
     const skipWaiting = vi.fn()
 
-    runInNewContext(await readFile(join(distPath, "sw.js"), "utf8"), {
+    runInNewContext(await readFile(join(distPath, "public/sw.js"), "utf8"), {
         URL,
         Request: class extends Request {
             constructor(url: string, options: RequestInit) {
@@ -89,17 +93,24 @@ async function createWorker() {
 describe("PWA release resources", () => {
     it("includes the complete shell and fonts, excludes private/debug data, and versions changed content", async () => {
         const distPath = await createSite()
-        const first = await writeServiceWorker({ distPath })
-        expect(first.urls).toEqual(["/index.html", "/manifest.webmanifest", "/static/app.css", "/static/app.js", "/static/chinese.woff2", "/static/export.js"])
-        expect(await writeServiceWorker({ distPath })).toEqual(first)
-        await writeFile(join(distPath, "index.html"), "version two")
-        expect((await writeServiceWorker({ distPath })).cacheName).not.toBe(first.cacheName)
+        const first = await writeServiceWorker({ projectPath: distPath })
+        expect(first.urls).toEqual([
+            "/",
+            "/_next/static/app.css",
+            "/_next/static/app.js",
+            "/_next/static/chinese.woff2",
+            "/_next/static/export.js",
+            "/manifest.webmanifest",
+        ])
+        expect(await writeServiceWorker({ projectPath: distPath })).toEqual(first)
+        await writeFile(join(distPath, ".next/server/app/index.html"), "version two")
+        expect((await writeServiceWorker({ projectPath: distPath })).cacheName).not.toBe(first.cacheName)
     })
 
     it("rejects an incomplete release", async () => {
         const distPath = await createSite()
-        await rm(join(distPath, "manifest.webmanifest"))
-        await expect(writeServiceWorker({ distPath })).rejects.toThrow("PWA 缺少首页或安装清单")
+        await rm(join(distPath, "public/manifest.webmanifest"))
+        await expect(writeServiceWorker({ projectPath: distPath })).rejects.toThrow("PWA 缺少首页或安装清单")
     })
 
     it("waits for all assets and does not force an update over an open document", async () => {
@@ -130,9 +141,9 @@ describe("PWA release resources", () => {
         const respondWith = vi.fn()
         handlers.get("fetch")!({ request: { method: "GET", url: "https://example.test/?source=installed", mode: "navigate" }, respondWith })
         expect(await (await respondWith.mock.calls[0][0]).text()).toBe("cached")
-        expect(cache.match).toHaveBeenCalledWith("/index.html")
+        expect(cache.match).toHaveBeenCalledWith("/")
         cache.match.mockResolvedValueOnce(new Response("font"))
-        handlers.get("fetch")!({ request: { method: "GET", url: "https://example.test/static/chinese.woff2" }, respondWith })
+        handlers.get("fetch")!({ request: { method: "GET", url: "https://example.test/_next/static/chinese.woff2" }, respondWith })
         expect(await (await respondWith.mock.calls[1][0]).text()).toBe("font")
         expect(fetch).not.toHaveBeenCalled()
     })
@@ -145,6 +156,9 @@ describe("PWA release resources", () => {
             { method: "GET", url: "https://example.test/login", mode: "navigate" },
             { method: "GET", url: "https://example.test/user", mode: "navigate" },
             { method: "GET", url: "https://example.test/api/account" },
+            { method: "GET", url: "https://example.test/api/image?url=https%3A%2F%2Fremote.test%2Fphoto.png" },
+            { method: "GET", url: "https://example.test/?_rsc=payload", mode: "navigate" },
+            { method: "GET", url: "https://example.test/", mode: "navigate", headers: new Headers({ RSC: "1" }) },
             { method: "GET", url: "https://example.test/user-image.png" },
             { method: "GET", url: "https://remote.test/static/app.js" },
             { method: "POST", url: "https://example.test/" },

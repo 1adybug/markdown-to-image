@@ -1,5 +1,16 @@
 # 验证记录
 
+## 2026-10-21：Next.js Serverless 迁移
+
+- 使用 Node.js 24、Next.js 16.4.2 的本地生产实例验证，首页静态生成，`/api/image` 为动态 Route Handler。
+- 公共测试图片原站返回 `image/png`，没有 `Access-Control-Allow-Origin`；Markdown 和 HTML 图片均通过代理显示，成功导出 PNG / JPG / WebP，复制得到 PNG 剪贴板内容。已人工查看导出的 PNG，图片与中文均完整。
+- 失效图片显示持久错误并阻止缺图导出；修改地址后恢复。刷新恢复源文和格式，390px 视口验证编辑 / 预览切换、主题及无横向溢出。
+- 停止本地服务后重新加载页面，成功恢复中文草稿并导出 WebP，验证首页、字体及导出动态脚本可离线使用。API 与 RSC 的缓存排除另有自动测试覆盖。
+- 本机 DNS 将公网域名解析为 `198.18.x.x`，按生产安全策略被拒绝。远程图片验收使用仅限验证进程、仅对两个测试域名生效的真实公网 DNS 解析；未放开生产地址校验或修改系统网络。
+- `pnpm typecheck`、`pnpm lint`、`pnpm test`（10 个文件、246 项测试）、`pnpm build`、`pnpm icons:check` 与差异检查通过；设计静态审计为 0 个问题。未部署或提交；线上 Vercel 网络、Windows / Android 安装和 iOS 真机启动仍需独立验收。
+
+下方保留迁移前的历史记录。
+
 2026-09-24，本轮中文 Markdown 转图片功能验收。
 
 ## 自动检查

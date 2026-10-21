@@ -1,5 +1,4 @@
 allowBuilds:
-    core-js: true
     unrs-resolver: true
 minimumReleaseAgeExclude:
     - "@1adybug/eslint"
@@ -7,12 +6,3 @@ minimumReleaseAgeExclude:
     - "@1adybug/prettier-plugin-block-padding"
     - "@1adybug/prettier-plugin-remove-braces"
     - "@1adybug/prettier-plugin-sort-imports"
-    - "@1adybug/xlsx"
-    - deepsea-components
-    - deepsea-tools
-    - sdrr
-    - soda-antd
-    - soda-hooks
-    - soda-react
-    - soda-tanstack-query
-    - soda-type

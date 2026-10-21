@@ -2,7 +2,7 @@
     "id": "/",
     "name": "字里成图 · Markdown 转图片",
     "short_name": "字里成图",
-    "description": "中文友好的 Markdown 转图片工具，实时预览、九种主题与高清 PNG 导出。内容在浏览器本地处理。",
+    "description": "中文友好的 Markdown 转图片工具，实时预览、九种主题与高清多格式导出。文稿在浏览器本地处理。",
     "lang": "zh-CN",
     "start_url": "/",
     "scope": "/",

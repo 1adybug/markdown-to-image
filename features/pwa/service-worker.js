@@ -35,11 +35,12 @@ self.addEventListener("fetch", event => {
     if (request.method !== "GET") return
     const url = new URL(request.url)
     if (url.origin !== self.location.origin) return
+    if (url.pathname.startsWith("/api/") || url.searchParams.has("_rsc") || request.headers?.get("RSC") === "1") return
 
     // Only the public workspace has an offline document. Never cache account/API
     // responses, protected navigations, or images referenced by a user's Markdown.
     const isWorkspace = request.mode === "navigate" && (url.pathname === "/" || url.pathname === "/index.html")
-    const cacheKey = isWorkspace ? "/index.html" : request.url
+    const cacheKey = isWorkspace ? "/" : request.url
     if (!isWorkspace && (request.mode === "navigate" || !precacheUrls.has(request.url))) return
 
     // Keep HTML and hashed assets on the same release until the waiting worker activates.

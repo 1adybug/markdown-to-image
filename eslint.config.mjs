@@ -1,8 +1,10 @@
 import config from "@1adybug/eslint"
 
-export default [
+const eslintConfig = [
     {
-        ignores: ["components/ui/**"],
+        ignores: ["components/ui/**", ".next/**", ".verification/**", "next-env.d.ts", "public/sw.js"],
     },
     ...config,
 ]
+
+export default eslintConfig

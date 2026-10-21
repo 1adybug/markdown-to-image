@@ -244,7 +244,7 @@ function measureDocument(element: HTMLElement) {
 }
 
 function assertImagesAvailable(element: HTMLElement) {
-    if (element.querySelector('[data-image-error="true"]')) throw new Error("文稿中有无法加载的图片，请检查图片地址和跨域访问权限，修正后再导出。")
+    if (element.querySelector('[data-image-error="true"]')) throw new Error("文稿中有无法加载的图片，请检查图片地址、网络或原站访问限制，修正后再导出。")
 }
 
 export interface ExportDocumentParams {
@@ -279,7 +279,7 @@ export async function exportDocument(params: ExportDocumentParams): Promise<Blob
                 }),
                 message: "图片或字体资源加载超时，请检查网络后重试。",
             }).catch(cause => {
-                resourceError = new Error("图片或字体无法嵌入，请确认地址可访问且允许跨域读取（CORS）后重试。", { cause })
+                resourceError = new Error("图片或字体无法嵌入，请检查资源地址、网络或原站访问限制后重试。", { cause })
                 throw resourceError
             })
             resources.set(url, promise)

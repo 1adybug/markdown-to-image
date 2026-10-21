@@ -18,8 +18,6 @@ import {
 import { useTheme } from "next-themes"
 import { toast } from "react-hot-toast"
 
-import logo from "@/assets/logo.svg?url"
-
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Field, FieldLabel } from "@/components/ui/field"
@@ -174,10 +172,11 @@ export function MarkdownWorkspace() {
 
     return (
         <main className="markdown-workspace" lang="zh-CN">
-            <title>Markdown 转图片 · 字里成图</title>
             <header className="workspace-header">
                 <div className="workspace-brand">
-                    <img className="brand-mark" src={logo} width={42} height={42} alt="" />
+                    {/* The SVG is already a local, generated brand asset. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img className="brand-mark" src="/icons/logo.svg" width={42} height={42} alt="" />
                     <div>
                         <h1>字里成图</h1>
                         <p>Markdown 转图片</p>
@@ -186,7 +185,7 @@ export function MarkdownWorkspace() {
                 <div className="header-actions">
                     <span className="privacy-note">
                         <ShieldCheckIcon aria-hidden="true" />
-                        本地处理，无需登录
+                        文稿本地处理，无需登录
                     </span>
                     <Button
                         variant="ghost"

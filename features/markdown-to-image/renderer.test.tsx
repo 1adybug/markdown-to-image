@@ -3,6 +3,7 @@ import { Fragment } from "react"
 import { act, fireEvent, render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 
+import { getImageUrl } from "./image-url"
 import { MarkdownDocument } from "./MarkdownDocument"
 import { defaultSettings, MarkdownTheme } from "./model"
 
@@ -167,6 +168,15 @@ describe("ChatGPT 引用标记", () => {
 })
 
 describe("安全内容与图片", () => {
+    it("Markdown 和 HTML 图片共用代理，链接仍保留原始地址", () => {
+        const original = "https://images.example/中文.png?token=a%2Bb&size=2"
+        const { container } = renderMarkdown(`![Markdown](${original})\n\n<img alt="HTML" src="${original}">\n\n[原图](${original})`)
+        const images = container.querySelectorAll("img")
+        expect(images).toHaveLength(2)
+        for (const image of images) expect(image.getAttribute("src")).toBe(getImageUrl(original, document.baseURI))
+        expect(container.querySelector("a")?.getAttribute("href")).toContain("https://images.example/")
+    })
+
     it("保留安全 HTML，过滤执行内容、事件、样式和危险协议", () => {
         const { container } = renderMarkdown(
             '<b>粗体</b><br><img src="javascript:alert(1)" onerror="alert(2)"><script>alert(3)</script><style>body{display:none}</style><iframe src="https://example.com"></iframe>\n\n<a href="javascript:alert(4)" style="position:fixed">危险链接</a>\n\n[危险](javascript:alert%285%29)',
@@ -186,9 +196,10 @@ describe("安全内容与图片", () => {
         expect(container.querySelector("[data-image-error]")?.textContent).toContain("拒绝")
     })
 
-    it("跨域图片使用匿名请求，错误可见且修改地址可重试", () => {
+    it("远程图片使用同源代理，错误可见且修改地址可重试", () => {
         const { container, rerender } = renderMarkdown("![示意](https://example.com/image.png)")
         const image = screen.getByAltText("示意")
+        expect(image.getAttribute("src")).toBe(getImageUrl("https://example.com/image.png", document.baseURI))
         expect(image.getAttribute("crossorigin")).toBe("anonymous")
         fireEvent.error(image)
         expect(container.querySelector("[data-image-error]")?.textContent).toContain("图片无法加载：示意")
@@ -205,7 +216,7 @@ describe("安全内容与图片", () => {
 
         const retryImage = screen.getByAltText("示意")
         expect(retryImage).not.toBe(initialImage)
-        expect(retryImage).toHaveAttribute("src", "https://example.com/image.png")
+        expect(retryImage).toHaveAttribute("src", getImageUrl("https://example.com/image.png", document.baseURI))
         expect(retryImage).toHaveAttribute("hidden")
         expect(screen.getByRole("button", { name: "重新加载图片" })).toBeDisabled()
         expect(container.querySelector('[data-image-error="true"]')).not.toBeNull()
@@ -224,7 +235,7 @@ describe("安全内容与图片", () => {
 
         expect(container.querySelector('[data-image-error="true"]')).not.toBeNull()
         expect(screen.getByRole("button", { name: "重新加载图片" })).toBeEnabled()
-        expect(screen.getByAltText("示意")).toHaveAttribute("src", "https://example.com/image.png")
+        expect(screen.getByAltText("示意")).toHaveAttribute("src", getImageUrl("https://example.com/image.png", document.baseURI))
     })
 
     it("图片重试超时后恢复重试按钮，并继续阻止缺图导出", () => {
